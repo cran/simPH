@@ -1,15 +1,15 @@
 \name{simGG.simlinear}
 \alias{simGG.simlinear}
-\title{Plot simulated linear time-constant quantities of interest.}
+\title{Plot simulated linear time-constant quantities of interest from Cox Proportional Hazards Models}
 \usage{
   \method{simGG}{simlinear} (obj, from = NULL, to = NULL,
     xlab = NULL, ylab = NULL, title = NULL,
     smoother = "auto", spalette = "Set1", leg.name = "",
     lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3",
-    psize = 1, palpha = 0.1, ...)
+    psize = 1, alpha = 0.1, ribbons = FALSE, ...)
 }
 \arguments{
-  \item{obj}{a simlinear object.}
+  \item{obj}{a \code{simlinear} class object.}
 
   \item{xlab}{a label for the plot's x-axis.}
 
@@ -22,10 +22,10 @@
   \item{to}{numeric time to plot to. Only relevant if
   \code{qi = "Hazard Rate"}.}
 
-  \item{title}{the plot's main title}
+  \item{title}{the plot's main title.}
 
   \item{smoother}{what type of smoothing line to use to
-  summarize the plotted coefficient}
+  summarize the plotted coefficient.}
 
   \item{spalette}{colour palette for use in \code{qi =
   "Hazard Rate"}. Default palette is \code{"Set1"}. See
@@ -50,29 +50,43 @@
   \item{psize}{size of the plotted simulation points.
   Default is \code{psize = 1}. See \code{\link{ggplot2}}.}
 
-  \item{palpha}{point alpha (e.g. transparency). Default is
-  \code{palpha = 0.05}. See \code{\link{ggplot2}}.}
+  \item{alpha}{point alpha (e.g. transparency) for the
+  points or ribbons. Default is \code{alpha = 0.1}. See
+  \code{\link{ggplot2}}.}
+
+  \item{ribbons}{logical specifies whether or not to use
+  summary ribbons of the simulations rather than plotting
+  every simulation value as a point. If \code{ribbons =
+  TRUE} a plot will be created with shaded areas
+  ('ribbons') for the minimum and maximum simulation values
+  (i.e. the middle interval set with \code{qi} in
+  \code{\link{coxsimLinear}}) as well as the central 50
+  percent of this area. It also plots a line for the median
+  value of the full area, so values in \code{smoother} are
+  ignored. One of the key advantages of using ribbons
+  rather than points is that it creates plots with smaller
+  file sizes.}
 
   \item{...}{Additional arguments. (Currently ignored.)}
 }
 \value{
-  a ggplot2 object
+  a \code{gg} \code{ggplot} class object
 }
 \description{
-  Uses ggplot2 to plot the quantities of interest from
-  \code{simlinear} objects, including relative hazards,
-  first differences, hazard ratios, and hazard rates. If
-  there are multiple strata, the quantities of interest
-  will be plotted in a grid by strata. Note: A dotted line
-  is created at y = 1 (0 for first difference), i.e. no
-  effect, for time-varying hazard ratio graphs. No line is
-  created for hazard rates.
-}
-\details{
-  \code{simGG.simlinear} uses ggplot2 to plot the
+  \code{simGG.simlinear} uses \link{ggplot2} to plot the
   quantities of interest from \code{simlinear} objects,
   including relative hazards, first differences, hazard
   ratios, and hazard rates.
+}
+\details{
+  Uses \link{ggplot2} to plot the quantities of interest
+  from \code{simlinear} objects, including relative
+  hazards, first differences, hazard ratios, and hazard
+  rates. If there are multiple strata, the quantities of
+  interest will be plotted in a grid by strata. Note: A
+  dotted line is created at y = 1 (0 for first difference),
+  i.e. no effect, for time-varying hazard ratio graphs. No
+  line is created for hazard rates.
 }
 \examples{
 ## dontrun
@@ -98,7 +112,7 @@
 # Simulate and plot Hazard Rate for stafcder variable
 # Sim2 <- coxsimLinear(M1, b = "stafcder", nsim = 100,
 #						qi = "Hazard Rate", Xj = c(1237, 1600))
-# simGG(Sim2)
+# simGG(Sim2, ribbons = TRUE)
 }
 \references{
   Licht, Amanda A. 2011. ''Change Comes with Time:

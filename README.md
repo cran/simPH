@@ -3,13 +3,13 @@ simPH
 
 ### Christopher Gandrud
 
-### Version 0.7.1
+### Version 0.8.1
 
-### Note: **simPH** is in beta. Please report any bugs at <https://github.com/christophergandrud/simPH/issues>.
+### Please report any bugs at <https://github.com/christophergandrud/simPH/issues>.
 
 ---
 
-An R package for simulating and plotting quantities of interest (relative hazards, first differences, and hazard ratios)for linear coefficients, multiplicative interactions, polynomials, penalised splines, and non-proportional hazards, as well as stratified survival curves from Cox Proportional Hazard models.
+An R package for simulating and plotting quantities of interest (relative hazards, first differences, and hazard ratios) for linear coefficients, multiplicative interactions, polynomials, penalised splines, and non-proportional hazards, as well as stratified survival curves from Cox Proportional Hazard models.
 
 For more information plus examples, please see this [working paper](http://papers.ssrn.com/sol3/papers.cfm?abstract_id=2227226).
 
@@ -104,7 +104,7 @@ Brambor, Thomas, William Roberts Clark, and Matt Golder. 2006. [“Understanding
 
 For an example of how non-proportional hazard results were often presented before **simPH** see (some of the problems I encountered in this paper were a major part of why I'm developing this package): 
 
-Gandrud, Christopher. 2012. [“The Diffusion of Financial Supervisory Governance Ideas.”](http://www.tandfonline.com/doi/full/10.1080/09692290.2012.727362) Review of International Political Economy.
+Gandrud, Christopher. 2013. [“The Diffusion of Financial Supervisory Governance Ideas.”](http://www.tandfonline.com/doi/full/10.1080/09692290.2012.727362) Review of International Political Economy. 20(4):881-916.
 
 ---
 

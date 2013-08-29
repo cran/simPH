@@ -1,17 +1,17 @@
-#' Simulate quntities of interest for linear time-constant covariates from Cox Proportional Hazards models.
+#' Simulate quantities of interest for linear time constant covariates from Cox Proportional Hazards models
 #'
-#' \code{coxsimLinear} simulates relative hazards, first differences, and hazard ratios for time-constant covariates from models estimated with \code{\link{coxph}} using the multivariate normal distribution.
-#' @param obj a coxph fitted model object.
+#' \code{coxsimLinear} simulates relative hazards, first differences, and hazard ratios for time-constant covariates from models estimated with \code{\link{coxph}} using the multivariate normal distribution. These can be plotted with \code{\link{simGG}}.
+#' @param obj a \code{\link{coxph}} class fitted model object.
 #' @param b character string name of the coefficient you would like to simulate.
 #' @param qi quantity of interest to simulate. Values can be \code{"Relative Hazard"}, \code{"First Difference"}, \code{"Hazard Ratio"}, and \code{"Hazard Rate"}. The default is \code{qi = "Relative Hazard"}. If \code{qi = "Hazard Rate"} and the \code{coxph} model has strata, then hazard rates for each strata will also be calculated.
-#' @param Xj numeric vector of values of X to simulate for.
+#' @param Xj numeric vector of fitted values for \code{b} to simulate for.
 #' @param Xl numeric vector of values to compare \code{Xj} to. Note if \code{code = "Relative Hazard"} only \code{Xj} is relevant.
 #' @param means logical, whether or not to use the mean values to fit the hazard rate for covaraiates other than \code{b}. 
 #' @param nsim the number of simulations to run per value of X. Default is \code{nsim = 1000}. Note: it does not currently support models that include polynomials created by \code{\link{I}}.
-#' @param ci the proportion of middle simulations to keep. The default is \code{ci = 0.95}, i.e. keep the middle 95 percent. If \code{spin = TRUE} then \code{ci} is the convidence level of the shortest probability interval. Any value from 0 through 1 may be used.
-#' @param spin logical, whether or not to keep only the shortest proability interval rather than the middle simulations.
+#' @param ci the proportion of simulations to keep. The default is \code{ci = 0.95}, i.e. keep the middle 95 percent. If \code{spin = TRUE} then \code{ci} is the confidence level of the shortest probability interval. Any value from 0 through 1 may be used.
+#' @param spin logical, whether or not to keep only the shortest probability interval rather than the middle simulations.
 #'
-#' @return a simlinear object
+#' @return a \code{simlinear} object
 #'
 #' @description Simulates relative hazards, first differences, hazard ratios, and hazard rates for linear time-constant covariates from Cox Proportional Hazard models. These can be plotted with \code{\link{simGG}}.
 #'
@@ -48,7 +48,7 @@
 #'
 #' King, Gary, Michael Tomz, and Jason Wittenberg. 2000. ''Making the Most of Statistical Analyses: Improving Interpretation and Presentation.'' American Journal of Political Science 44(2): 347-61.
 #' 
-#' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient Shortest Probablility Intervals.'' Arvix. http://arxiv.org/pdf/1302.2142v1.pdf.
+#' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient Shortest Probability Intervals.'' Arvix. \url{http://arxiv.org/pdf/1302.2142v1.pdf}.
 #'
 #' @import data.table
 #' @importFrom reshape2 melt
@@ -58,7 +58,7 @@
 
 coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, means = FALSE, nsim = 1000, ci = 0.95, spin = FALSE)
 {	
-  QI <- NULL
+  HRValue <- strata <- QI <- NULL
   if (qi != "Hazard Rate" & isTRUE(means)){
     stop("means can only be TRUE when qi = 'Hazard Rate'.")
   }
@@ -96,7 +96,6 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
 
   # If all values aren't set for calculating the hazard rate
   if (!isTRUE(means)){
-
   	# Subset simulations to only include b
   	bpos <- match(b, dfn)
   	Simb <- data.frame(DrawnDF[, bpos])
@@ -110,9 +109,14 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
       Simb <- merge(Simb, Xs)
       Simb$QI <- exp(Simb$Xj * Simb$Coef) 
     } else if (qi == "First Difference"){
-	    Xs <- data.frame(Xj, Xl)
-	    Simb <- merge(Simb, Xs)
-	    Simb$QI<- (exp((Simb$Xj - Simb$Xl) * Simb$Coef) - 1) * 100
+      if (length(Xj) != length(Xl)){
+        stop("Xj and Xl must be the same length.")
+      } 
+      else {
+  	    Xs <- data.frame(Xj, Xl)
+  	    Simb <- merge(Simb, Xs)
+  	    Simb$QI<- (exp((Simb$Xj - Simb$Xl) * Simb$Coef) - 1) * 100
+      }
     }
     else if (qi == "Hazard Ratio"){
     	Xs <- data.frame(Xj, Xl)
@@ -135,10 +139,19 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
   	  	Simb$FakeID <- 1
         bfitDT <- data.table(bfit, key = "FakeID", allow.cartesian = TRUE)
         SimbDT <- data.table(Simb, key = "FakeID", allow.cartesian = TRUE)
-        SimbCombDT <- SimbDT[bfitDT, allow.cartesian=TRUE]
-        Simb <- data.frame(SimbCombDT)
-  	  	Simb$QI <- Simb$hazard * Simb$HR
-  	  	Simb <- Simb[, -1]
+        Simb <- SimbDT[bfitDT, allow.cartesian = TRUE]
+        # Create warning message
+        Rows <- nrow(Simb)
+        if (Rows > 2000000){
+          message(paste("There are", Rows, "simulations. This may take awhile. Consider using nsim to reduce the number of simulations."))
+        }
+        Simb$QI <- Simb$hazard * Simb$HR 
+        if (is.null(Simb$strata)){
+          Simb <- Simb[, list(time, Xj, QI, HRValue)]
+        } else if (!is.null(Simb$strata)){
+          Simb <- Simb[, list(time, Xj, QI, HRValue, strata)]
+        }
+        Simb <- data.frame(Simb)
     }
   }
 
@@ -188,9 +201,19 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
     Simb$FakeID <- 1
     bfitDT <- data.table(bfit, key = "FakeID", allow.cartesian = TRUE)
     SimbDT <- data.table(Simb, key = "FakeID", allow.cartesian = TRUE)
-    SimbCombDT <- SimbDT[bfitDT, allow.cartesian = TRUE]
-    Simb <- data.frame(SimbCombDT)
-    Simb$QI <- Simb$hazard * Simb$HR
+    Simb <- SimbDT[bfitDT, allow.cartesian = TRUE]
+    # Create warning message
+    Rows <- nrow(Simb)
+    if (Rows > 2000000){
+      message(paste("There are", Rows, "simulations. This may take awhile. Consider using nsim to reduce the number of simulations."))
+    }
+    Simb$QI <- Simb$hazard * Simb$HR 
+    if (is.null(Simb$strata)){
+      Simb <- Simb[, list(time, Xj, QI, HRValue)]
+    } else if (!is.null(Simb$strata)){
+      Simb <- Simb[, list(time, Xj, QI, HRValue, strata)]
+    }
+    Simb <- data.frame(Simb)
   }
 
   # Drop simulations outside of 'confidence bounds'
@@ -204,6 +227,19 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
                                 QI = QI, spin = spin, ci = ci)
 
   # Final clean up
-  class(SimbPerc) <- c("simlinear", qi)
-  SimbPerc
+  # Subset simlinear object & create a data frame of important variables
+  if (qi == "Hazard Rate"){
+    if (is.null(SimbPerc$strata)){
+      SimPercSub <- data.frame(SimbPerc$time, SimbPerc$QI, SimbPerc$HRValue)
+      names(SimPercSub) <- c("Time", "HRate", "HRValue")
+    } else if (!is.null(SimbPerc$strata)) {
+    SimPercSub <- data.frame(SimbPerc$time, SimbPerc$QI, SimbPerc$strata, SimbPerc$HRValue)
+    names(SimPercSub) <- c("Time", "HRate", "Strata", "HRValue")
+    }
+  } else if (qi == "Hazard Ratio" | qi == "Relative Hazard" | qi == "First Difference"){
+    SimPercSub <- data.frame(SimbPerc$Xj, SimbPerc$QI)
+    names(SimPercSub) <- c("Xj", "QI")
+  }
+  class(SimPercSub) <- c("simlinear", qi)
+  SimPercSub
 }

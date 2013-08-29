@@ -1,22 +1,23 @@
-#' Simulate time-varying quantities of interest from coxph fitted model objects
+#' Simulate time-varying quantities of interest from Cox Proportional Hazards models
 #' 
-#' \code{coxsimtvc} simulates time-varying relative hazards, first differences, and hazard ratios from models estimated with \code{\link{coxph}} using the multivariate normal distribution.
-#' @param obj a coxph fitted model object with a time interaction. 
+#' \code{coxsimtvc} simulates time-varying relative hazards, first differences, and hazard ratios from models estimated with \code{\link{coxph}} using the multivariate normal distribution. These can be plotted with \code{\link{simGG}}.
+#' @param obj a \code{\link{coxph}} fitted model object with a time interaction. 
 #' @param b the non-time interacted variable's name.
 #' @param btvc the time interacted variable's name.
 #' @param qi character string indicating what quantity of interest you would like to calculate. Can be \code{'Relative Hazard'}, \code{'First Difference'}, \code{'Hazard Ratio'}, \code{'Hazard Rate'}. Default is \code{qi = 'Relative Hazard'}. If \code{qi = 'First Difference'} or \code{qi = 'Hazard Ratio'} then you can set \code{Xj} and \code{Xl}.
-#' @param Xj numeric vector of fitted values for Xj. Must be the same length as \code{Xl} or \code{Xl} must be \code{NULL}. 
-#' @param Xl numeric vector of fitted values for Xl. Must be the same length as Xj. Only applies if \code{qi = 'First Difference'} or \code{qi = 'Hazard Ratio'}.
+#' @param Xj numeric vector of fitted values for \code{b}. Must be the same length as \code{Xl} or \code{Xl} must be \code{NULL}. 
+#' @param Xl numeric vector of fitted values for Xl. Must be the same length as \code{Xj}. Only applies if \code{qi = 'First Difference'} or \code{qi = 'Hazard Ratio'}.
 #' @param nsim the number of simulations to run per point in time. Default is \code{nsim = 1000}.
-#' @param tfun function of time that btvc was multiplied by. Default is "linear". Can also be "log" (natural log) and "power". If \code{tfun = "power"} then the pow argument needs to be specified also.
+#' @param tfun function of time that btvc was multiplied by. Default is "linear". It can also be "log" (natural log) and "power". If \code{tfun = "power"} then the pow argument needs to be specified also.
 #' @param pow if \code{tfun = "power"}, then use pow to specify what power the time interaction was raised to.
 #' @param from point in time from when to begin simulating coefficient values
-#' @param to point in time to stop simulating coefficient values
-#' @param by time intervals by which to simulate coefficient values
-#' @param ci the proportion of middle simulations to keep. The default is \code{ci = 0.95}, i.e. keep the middle 95 percent. If \code{spin = TRUE} then \code{ci} is the convidence level of the shortest probability interval. Any value from 0 through 1 may be used.
-#' @param spin logical, whether or not to keep only the shortest proability interval rather than the middle simulations.
+#' @param to point in time to stop simulating coefficient values.
+#' @param by time intervals by which to simulate coefficient values.
+#' @param ci the proportion of simulations to keep. The default is \code{ci = 0.95}, i.e. keep the middle 95 percent. If \code{spin = TRUE} then \code{ci} is the confidence level of the shortest probability interval. Any value from 0 through 1 may be used.
+#' @param spin logical, whether or not to keep only the shortest probability interval rather than the middle simulations.
 #'
-#' @return a simtvc object
+#' @return a \code{simtvc} object
+#'
 #' @details Simulates time-varying relative hazards, first differences, and hazard ratios using parameter estimates from \code{coxph} models. Can also simulate hazard rates for multiple strata.
 #'
 #' Relative hazards are found using:
@@ -67,7 +68,7 @@
 #' # Create simtvc object for Relative Hazard
 #' Sim1 <- coxsimtvc(obj = M1, b = "qmv", btvc = "Lqmv",
 #'                    tfun = "log", from = 80, to = 2000, 
-#'                    Xj = 1, by = 15, ci = 0.99)
+#'                    Xj = 1, by = 15, ci = 0.99, nsim = 100)
 #'
 #' ## dontrun 
 #' # Create simtvc object for First Difference  
@@ -98,29 +99,17 @@
 #'
 #' King, Gary, Michael Tomz, and Jason Wittenberg. 2000. ''Making the Most of Statistical Analyses: Improving Interpretation and Presentation.'' American Journal of Political Science 44(2): 347-61.
 #'
-#' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient Shortest Probablility Intervals.'' Arvix. http://arxiv.org/pdf/1302.2142v1.pdf.
+#' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient Shortest Probability Intervals.'' Arvix. \url{http://arxiv.org/pdf/1302.2142v1.pdf}.
 
 
-coxsimtvc <- function(obj, b, btvc, qi = "Relative Hazard", Xj = NULL, Xl = NULL, tfun = "linear", pow = NULL, nsim = 1000, from, to, by, ci = 0.95, spin = FALSE)
+coxsimtvc <- function(obj, b, btvc, qi = "Relative Hazard", Xj = NULL, Xl = NULL, tfun = "linear", pow = NULL, nsim = 1000, from, to, by = 1, ci = 0.95, spin = FALSE)
 {
-  QI <- NULL
-  ############ Means Not Supported Yet for coxsimtvc ########
-  #### means code is a place holder for future versions #####
-  means <- FALSE
+  HRValue <- strata <- QI <- NULL
   # Ensure that qi is valid
   qiOpts <- c("Relative Hazard", "First Difference", "Hazard Rate", "Hazard Ratio")
   TestqiOpts <- qi %in% qiOpts
   if (!isTRUE(TestqiOpts)){
     stop("Invalid qi type. qi must be 'Relative Hazard', 'First Difference', 'Hazard Rate', or 'Hazard Ratio'")
-  }
-
-  MeansMessage <- NULL
-  if (isTRUE(means) & length(obj$coefficients) == 3){
-    means <- FALSE
-    MeansMessage <- FALSE
-    message("Note: means reset to FALSE. The model only includes the interaction variables.")
-  } else if (isTRUE(means) & length(obj$coefficients) > 3){
-    MeansMessage <- TRUE
   }
 
   if (is.null(Xl) & qi != "Hazard Rate"){
@@ -154,126 +143,76 @@ coxsimtvc <- function(obj, b, btvc, qi = "Relative Hazard", Xj = NULL, Xl = NULL
   DrawnDF <- data.frame(Drawn)
   dfn <- names(DrawnDF)
  
-  # If all values aren't set for calculating the hazard rate
-  if (!isTRUE(means)){
+  # Extract simulations for variables of interest
+  bpos <- match(b, dfn)
+  btvcpos <- match(btvc, dfn)
+  
+  Drawn <- data.frame(Drawn[, c(bpos, btvcpos)])
+  Drawn$ID <- 1:nsim
 
-    # Extract simulations for variables of interest
-    bpos <- match(b, dfn)
-    btvcpos <- match(btvc, dfn)
-    
-    Drawn <- data.frame(Drawn[, c(bpos, btvcpos)])
-    Drawn$ID <- 1:nsim
+  # Multiply time function with btvc
+  TVSim <- outer(Drawn[,2], tf)
+  TVSim <- data.frame(melt(TVSim))
+  names(TVSim) <- c("ID", "time", "TVC")
+  time <- 1:length(tf)
+  TempDF <- data.frame(time, tf)
+  TVSim <- merge(TVSim, TempDF)
 
-    # Multiply time function with btvc
-    TVSim <- outer(Drawn[,2], tf)
-    TVSim <- data.frame(melt(TVSim))
-    names(TVSim) <- c("ID", "time", "TVC")
-    time <- 1:length(tf)
-    TempDF <- data.frame(time, tf)
-    TVSim <- merge(TVSim, TempDF)
+  # Combine with non TVC version of the variable
+  TVSim <- merge(Drawn, TVSim, by = "ID")
+  TVSim$CombCoef <- TVSim[[2]] + TVSim$TVC
 
-    # Combine with non TVC version of the variable
-    TVSim <- merge(Drawn, TVSim, by = "ID")
-    TVSim$CombCoef <- TVSim[[2]] + TVSim$TVC
-
-    # Find quantity of interest
-    if (qi == "Relative Hazard"){
-        Xs <- data.frame(Xj)
-        names(Xs) <- c("Xj")
-        Xs$Comparison <- paste(Xs[, 1])
-        Simb <- merge(TVSim, Xs)
-        Simb$QI <- exp(Simb$CombCoef * Simb$Xj)
-    } else if (qi == "First Difference"){
-      if (length(Xj) != length(Xl)){
-        stop("Xj and Xl must be the same length.")
-      } else {
-        TVSim$QI <- exp(TVSim$CombCoef)
-        Xs <- data.frame(Xj, Xl)
-        Xs$Comparison <- paste(Xs[, 1], "vs.", Xs[, 2])
-        Simb <- merge(TVSim, Xs)
-        Simb$QI <- (exp((Simb$Xj - Simb$Xl) * Simb$CombCoef) - 1) * 100
-      }
-    } else if (qi == "Hazard Ratio"){
-       if (length(Xj) != length(Xl)){
-        stop("Xj and Xl must be the same length.")
-      } else {
-        Xs <- data.frame(Xj, Xl)
-        Xs$Comparison <- paste(Xs[, 1], "vs.", Xs[, 2])
-        Simb <- merge(TVSim, Xs)
-        Simb$QI <- exp((Simb$Xj - Simb$Xl) * Simb$CombCoef)
-      }
-    } else if (qi == "Hazard Rate"){
-        Xl <- NULL
-        message("Xl is ignored.")
-
-        if (isTRUE(MeansMessage)){
-          message("All variables values other than b are fitted at 0.")
-        } 
-        Xs <- data.frame(Xj)
-        Xs$HRValue <- paste(Xs[, 1])
-        Simb <- merge(TVSim, Xs)
-        Simb$HR <- exp(Simb$Xj * Simb$CombCoef)  
-        bfit <- basehaz(obj)
-        bfit$FakeID <- 1
-        Simb$FakeID <- 1
-        bfitDT <- data.table(bfit, key = "FakeID", allow.cartesian = TRUE)
-        SimbDT <- data.table(Simb, key = "FakeID", allow.cartesian = TRUE)
-        SimbCombDT <- SimbDT[bfitDT, allow.cartesian = TRUE]
-        Simb <- data.frame(SimbCombDT)
-        Simb$QI <- Simb$hazard * Simb$HR 
+  # Find quantity of interest
+  if (qi == "Relative Hazard"){
+      Xs <- data.frame(Xj)
+      names(Xs) <- c("Xj")
+      Xs$Comparison <- paste(Xs[, 1])
+      Simb <- merge(TVSim, Xs)
+      Simb$QI <- exp(Simb$CombCoef * Simb$Xj)
+  } else if (qi == "First Difference"){
+    if (length(Xj) != length(Xl)){
+      stop("Xj and Xl must be the same length.")
+    } else {
+      TVSim$QI <- exp(TVSim$CombCoef)
+      Xs <- data.frame(Xj, Xl)
+      Xs$Comparison <- paste(Xs[, 1], "vs.", Xs[, 2])
+      Simb <- merge(TVSim, Xs)
+      Simb$QI <- (exp((Simb$Xj - Simb$Xl) * Simb$CombCoef) - 1) * 100
     }
-  }
-
-  # If the user wants to calculate Hazard Rates using means for fitting all covariates other than b.
-  else if (isTRUE(means)){
-    Xl <- NULL
-    message("Xl ignored")
-
-    # Set all values of b at means for data used in the analysis
-    NotB <- setdiff(names(obj$means), b)
-    MeanValues <- data.frame(obj$means)
-    FittedMeans <- function(Z){
-      ID <- 1:nsim
-      Temp <- data.frame(ID)
-      for (i in Z){
-        BarValue <- MeanValues[i, ]
-        DrawnCoef <- DrawnDF[, i]
-        FittedCoef <- outer(DrawnCoef, BarValue)
-        FCMolten <- data.frame(melt(FittedCoef))
-        Temp <- cbind(Temp, FCMolten[,3])
-      }
-      Names <- c("ID", Z)
-      names(Temp) <- Names
-      Temp <- Temp[, -1]
-      return(Temp)
+  } else if (qi == "Hazard Ratio"){
+     if (length(Xj) != length(Xl)){
+      stop("Xj and Xl must be the same length.")
+    } else {
+      Xs <- data.frame(Xj, Xl)
+      Xs$Comparison <- paste(Xs[, 1], "vs.", Xs[, 2])
+      Simb <- merge(TVSim, Xs)
+      Simb$QI <- exp((Simb$Xj - Simb$Xl) * Simb$CombCoef)
     }
-    FittedComb <- data.frame(FittedMeans(NotB)) 
-    ExpandFC <- do.call(rbind, rep(list(FittedComb), length(Xj)))
-
-    # Set fitted values for Xj
-    bpos <- match(b, dfn)
-    Simb <- data.frame(DrawnDF[, bpos])
-
-    Xs <- data.frame(Xj)
-    Xs$HRValue <- paste(Xs[, 1])
-
-    Simb <- merge(Simb, Xs)
-    Simb$CombB <- Simb[, 1] * Simb[, 2]
-    Simb <- Simb[, 2:4]
-
-    Simb <- cbind(Simb, ExpandFC)
-    Simb$Sum <- rowSums(Simb[, c(-1, -2)])
-    Simb$HR <- exp(Simb$Sum)
-    Simb <- Simb[, c("HRValue", "HR", "Xj")]
-
-    bfit <- basehaz(obj)
-    bfit$FakeID <- 1
-    Simb$FakeID <- 1
-    bfitDT <- data.table(bfit, key = "FakeID", allow.cartesian = TRUE)
-    SimbDT <- data.table(Simb, key = "FakeID", allow.cartesian = TRUE)
-    SimbCombDT <- SimbDT[bfitDT, allow.cartesian = TRUE]
-    Simb <- data.frame(SimbCombDT)
-    Simb$QI <- Simb$hazard * Simb$HR 
+  } else if (qi == "Hazard Rate"){
+      Xl <- NULL
+      message("Xl is ignored.")
+      Xs <- data.frame(Xj)
+      Xs$HRValue <- paste(Xs[, 1])
+      Simb <- merge(TVSim, Xs)
+      Simb$HR <- exp(Simb$Xj * Simb$CombCoef)  
+      bfit <- basehaz(obj)
+      bfit$FakeID <- 1
+      Simb$FakeID <- 1
+      bfitDT <- data.table(bfit, key = "FakeID", allow.cartesian = TRUE)
+      SimbDT <- data.table(Simb, key = "FakeID", allow.cartesian = TRUE)
+      Simb <- SimbDT[bfitDT, allow.cartesian = TRUE]
+      # Create warning message
+      Rows <- nrow(Simb)
+      if (Rows > 2000000){
+        message(paste("There are", Rows, "simulations. This may take awhile. Consider using nsim to reduce the number of simulations."))
+      }
+      Simb$QI <- Simb$hazard * Simb$HR 
+      if (is.null(Simb$strata)){
+        Simb <- Simb[, list(time, tf, Xj, QI, HRValue)]
+      } else if (!is.null(Simb$strata)){
+        Simb <- Simb[, list(time, tf, Xj, QI, HRValue, strata)]
+      }
+      Simb <- data.frame(Simb)
   }
 
   # Drop simulations outside of 'confidence bounds'
@@ -290,8 +229,27 @@ coxsimtvc <- function(obj, b, btvc, qi = "Relative Hazard", Xj = NULL, Xl = NULL
   } else if (tfun == "power"){
     SimbPerc$RealTime <- SimbPerc$tf^(1/pow)
   }
-  
+
   # Final clean up
-  class(SimbPerc) <- c("simtvc", qi)
-  SimbPerc
+  # Subset simtvc object & create data frame of important variables
+  if (qi == "Hazard Rate"){
+    if (is.null(SimbPerc$strata)){
+      SimbPercSub <- data.frame(SimbPerc$RealTime, SimbPerc$QI, SimbPerc$HRValue)
+      names(SimbPercSub) <- c("Time", "HRate", "HRValue")
+    } else if (!is.null(SimbPerc$strata)) {
+      SimbPercSub <- data.frame(SimbPerc$RealTime, SimbPerc$QI, SimbPerc$strata, SimbPerc$HRValue)
+      names(SimbPercSub) <- c("Time", "HRate", "Strata", "HRValue")
+    }
+  } else if (qi == "Hazard Ratio"){
+      SimbPercSub <- data.frame(SimbPerc$RealTime, SimbPerc$QI, SimbPerc$Comparison)
+      names(SimbPercSub) <- c("Time", "QI", "Comparison")
+  } else if (qi == "Relative Hazard"){
+      SimbPercSub <- data.frame(SimbPerc$RealTime, SimbPerc$QI, SimbPerc$Xj)
+      names(SimbPercSub) <- c("Time", "QI", "Xj")
+  } else if (qi == "First Difference"){
+      SimbPercSub <- data.frame(SimbPerc$RealTime, SimbPerc$QI, SimbPerc$Comparison)
+      names(SimbPercSub) <- c("Time", "QI", "Comparison")
+  }
+  class(SimbPercSub) <- c("simtvc", qi)
+  SimbPercSub
 }

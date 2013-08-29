@@ -1,15 +1,15 @@
 \name{simGG.simtvc}
 \alias{simGG.simtvc}
-\title{Plot simulated time-varying hazard ratios or stratified time-varying hazard rates from a simtvc class object using ggplot2}
+\title{Plot simulated time-varying hazard ratios or stratified time-varying hazard rates from Cox Proportional Hazards Models}
 \usage{
   \method{simGG}{simtvc} (obj, from = NULL, to = NULL,
     xlab = NULL, ylab = NULL, title = NULL,
     smoother = "auto", spalette = "Set1", leg.name = "",
     lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3",
-    psize = 1, palpha = 0.1, ...)
+    psize = 1, alpha = 0.1, ribbons = FALSE, ...)
 }
 \arguments{
-  \item{obj}{a simtvc class object}
+  \item{obj}{a \code{simtvc} class object}
 
   \item{from}{numeric time to start the plot from.}
 
@@ -20,10 +20,10 @@
   \item{ylab}{a label of the plot's y-axis. The default
   uses the value of \code{qi}.}
 
-  \item{title}{the plot's main title}
+  \item{title}{the plot's main title.}
 
   \item{smoother}{what type of smoothing line to use to
-  summarize the plotted coefficient}
+  summarize the plotted coefficient.}
 
   \item{spalette}{colour palette for use in \code{qi =
   "Hazard Rate"}. Default palette is \code{"Set1"}. See
@@ -49,17 +49,32 @@
   \item{psize}{size of the plotted simulation points.
   Default is \code{psize = 1}. See \code{\link{ggplot2}}.}
 
-  \item{palpha}{point alpha (e.g. transparency). Default is
-  \code{palpha = 0.05}. See \code{\link{ggplot2}}.}
+  \item{alpha}{point alpha (e.g. transparency) for the
+  points or ribbons. Default is \code{alpha = 0.1}. See
+  \code{\link{ggplot2}}.}
+
+  \item{ribbons}{logical specifies whether or not to use
+  summary ribbons of the simulations rather than plotting
+  every simulation value as a point. If \code{ribbons =
+  TRUE} a plot will be created with shaded areas
+  ('ribbons') for the minimum and maximum simulation values
+  (i.e. the middle interval set with \code{qi} in
+  \code{\link{coxsimtvc}}) as well as the central 50
+  percent of this area. It also plots a line for the median
+  value of the full area, so values in \code{smoother} are
+  ignored. One of the key advantages of using ribbons
+  rather than points is that it creates plots with smaller
+  file sizes.}
 
   \item{...}{Additional arguments. (Currently ignored.)}
 }
 \value{
-  a ggplot2 object
+  a \code{gg} \code{ggplot} class object
 }
 \description{
-  \code{simGG.simtvc} uses ggplot2 to plot the simulated
-  hazards from a \code{simtvc} class object using ggplot2.
+  \code{simGG.simtvc} uses \link{ggplot2} to plot the
+  simulated hazards from a \code{simtvc} class object
+  created by \code{\link{coxsimtvc}} using \link{ggplot2}.
 }
 \details{
   Plots either a time varying hazard ratio or the hazard
@@ -118,13 +133,13 @@
 # Sim3 <- coxsimtvc(obj = M1, b = "backlog", btvc = "Lbacklog",
 #                  qi = "Hazard Ratio", Xj = c(191, 229),
 #                  Xl = c(0, 0),
-#                  tfun = "log", from = 80, to = 2000,
+#                  tfun = "log", from = 100, to = 2000,
 #                  by = 15, ci = 0.99)
 
 # Create plots
 # simGG(Sim1)
 # simGG(Sim2)
-# simGG(Sim3, leg.name = "Comparision", from = 1200)
+# simGG(Sim3, leg.name = "Comparision", from = 1200, ribbons = TRUE)
 }
 \references{
   Licht, Amanda A. 2011. ''Change Comes with Time:

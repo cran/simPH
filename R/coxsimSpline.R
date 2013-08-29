@@ -1,21 +1,35 @@
-#' Simulated quantities of interest for penalised splines from \code{coxph} models.
+#' Simulate quantities of interest for penalized splines from Cox Proportional Hazards models
 #'
-#' \code{coxsimSpline} simulates quantities of interest from penalised splines using multivariate normal distributions.
-#' @param obj a \code{coxph} fitted model object with a penalised spline.
+#' \code{coxsimSpline} simulates quantities of interest from penalized splines using multivariate normal distributions.
+#' @param obj a \code{\link{coxph}} class fitted model object with a penalized spline. These can be plotted with \code{\link{simGG}}.
 #' @param bspline a character string of the full \code{\link{pspline}} call used in \code{obj}. It should be exactly the same as how you entered it in \code{\link{coxph}}. You also need to enter a white spece before and after all equal (\code{=}) signs.
 #' @param bdata a numeric vector of splined variable's values.
 #' @param qi quantity of interest to simulate. Values can be \code{"Relative Hazard"}, \code{"First Difference"}, \code{"Hazard Ratio"}, and \code{"Hazard Rate"}. The default is \code{qi = "Relative Hazard"}. Think carefully before using \code{qi = "Hazard Rate"}. You may be creating very many simulated values which can be very computationally intensive to do. Adjust the number of simulations per fitted value with \code{nsim}.
-#' @param Xj numeric vector of values of X to simulate for.
+#' @param Xj numeric vector of fitted values for \code{b} to simulate for.
 #' @param Xl numeric vector of values to compare \code{Xj} to. Note if \code{qi = "Relative Hazard"} or \code{"Hazard Rate"} only \code{Xj} is relevant.
 #' @param nsim the number of simulations to run per value of \code{Xj}. Default is \code{nsim = 1000}.
-#' @param ci the proportion of middle simulations to keep. The default is \code{ci = 0.95}, i.e. keep the middle 95 percent. If \code{spin = TRUE} then \code{ci} is the convidence level of the shortest probability interval. Any value from 0 through 1 may be used.
-#' @param spin logical, whether or not to keep only the shortest proability interval rather than the middle simulations.
+#' @param ci the proportion of simulations to keep. The default is \code{ci = 0.95}, i.e. keep the middle 95 percent. If \code{spin = TRUE} then \code{ci} is the confidence level of the shortest probability interval. Any value from 0 through 1 may be used.
+#' @param spin logical, whether or not to keep only the shortest probability interval rather than the middle simulations.
 #'
-#' @return a simspline object
+#' @return a \code{simspline} object
 #'
-#' @description Simulates relative hazards, first differences, hazard ratios, and hazard rates for penalised splines from Cox Proportional Hazards models. These can be plotted with \code{\link{simGG}}. 
+#' @details Simulates relative hazards, first differences, hazard ratios, and hazard rates for penalized splines from Cox Proportional Hazards models. These can be plotted with \code{\link{simGG}}. 
+#' A Cox PH model with one penalized spline is given by:
+#'  \deqn{h(t|\mathbf{X}_{i})=h_{0}(t)\mathrm{e}^{g(x)}}
 #'
-#' Currently does not support simulating hazard rates form multiple stratified models.
+#' where \eqn{g(x)} is the penalized spline function. For our post-estimation purposes \eqn{g(x)} is basically a series of linearly combined coefficients such that:
+#'
+#'  \deqn{g(x) = \beta_{k_{1}}(x)_{1+} + \beta_{k_{2}}(x)_{2+} + \beta_{k_{3}}(x)_{3+} + \ldots + \beta_{k_{n}}(x)_{n+}}
+#'
+#' where \eqn{k} are the equally spaced spline knots with values inside of the range of observed \eqn{x} and \eqn{n} is the number of knots. 
+#'
+#' We can again draw values of each \eqn{\beta_{k_{1}}, \ldots \beta_{k_{n}}} from the multivariate normal distribution described above. We then use these simulated coefficients to estimates quantities of interest for a range covariate values. For example, the first difference between two values \eqn{x_{j}} and \eqn{x_{l}} is:
+#'
+#'    \deqn{\%\triangle h_{i}(t) = (\mathrm{e}^{g(x_{j}) - g(x_{l})} - 1) * 100}
+#'
+#' Relative hazards and hazard ratios can be calculated by extension.
+#'
+#' Currently \code{coxsimSpline} does not support simulating hazard rates form multiple stratified models.
 #'
 #' @examples
 #' ## dontrun
@@ -52,11 +66,11 @@
 #'
 #' @seealso \code{\link{simGG}}, \code{\link{survival}}, \code{\link{strata}}, and \code{\link{coxph}}
 #'
-#' @references Luke Keele, "Replication data for: Proportionally Difficult: Testing for Nonproportional Hazards In Cox Models", 2010, http://hdl.handle.net/1902.1/17068 V1 [Version] 
+#' @references Luke Keele, "Replication data for: Proportionally Difficult: Testing for Nonproportional Hazards In Cox Models", 2010, \url{http://hdl.handle.net/1902.1/17068} V1 [Version]. 
 #' 
 #' King, Gary, Michael Tomz, and Jason Wittenberg. 2000. ''Making the Most of Statistical Analyses: Improving Interpretation and Presentation.'' American Journal of Political Science 44(2): 347-61.
 #'
-#' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient Shortest Probablility Intervals.'' Arvix. http://arxiv.org/pdf/1302.2142v1.pdf.
+#' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient Shortest Probability Intervals.'' Arvix. \url{http://arxiv.org/pdf/1302.2142v1.pdf}.
 #' 
 #' @import data.table
 #' @importFrom stringr word str_match str_replace
@@ -67,7 +81,7 @@
 
 coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl = 0, nsim = 1000, ci = 0.95, spin = FALSE)
 { 
-	QI <- NULL
+	strata <- QI <- NULL
 	# Ensure that qi is valid
 	qiOpts <- c("Relative Hazard", "First Difference", "Hazard Rate", "Hazard Ratio")
 	TestqiOpts <- qi %in% qiOpts
@@ -174,24 +188,23 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 	}
 
 	# Find quantities of interest
-	if (qi == "Relative Hazard" | qi == "Hazard Ratio"){
+	if (qi == "Hazard Ratio"){
 	  	if (length(Xj) != length(Xl)){
 	      stop("Xj and Xl must be the same length.")
 	    } 
-
 		Simbj <- MergeX(Xj)
 	    names(Simbj) <- c("CoefName", "Coef", "IntervalStart", "IntervalFinish", "Xj")
 		Simbl <- MergeX(Xl)
 	    names(Simbl) <- c("CoefName", "Coef", "IntervalStart", "IntervalFinish", "Xl")
-
-		if (qi == "Hazard Ratio"){
-		 	Xs <- data.frame(Xj, Xl)   	
-		    Simbj <- merge(Simbj, Xs, by = "Xj")
-		    Simbj$Comparison <- paste(Simbj$Xj, "vs.", Simbj$Xl)
-		}
-
+	 	Xs <- data.frame(Xj, Xl)   	
+	    Simbj <- merge(Simbj, Xs, by = "Xj")
+	    Simbj$Comparison <- paste(Simbj$Xj, "vs.", Simbj$Xl)
 	    Simbj$QI <- exp((Simbj$Xj * Simbj$Coef) - (Simbl$Xl * Simbl$Coef))
 	    Simb <- Simbj
+	} else if (qi == "Relative Hazard"){
+		Simb <- MergeX(Xj)
+	    names(Simb) <- c("CoefName", "Coef", "IntervalStart", "IntervalFinish", "Xj")
+	    Simb$QI <- exp(Simb$Xj * Simb$Coef)
 	}
 	else if (qi == "First Difference"){
 	  	if (length(Xj) != length(Xl)){
@@ -226,10 +239,19 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 	  	Simb$FakeID <- 1
 		bfitDT <- data.table(bfit, key = "FakeID", allow.cartesian = TRUE)
 		SimbDT <- data.table(Simb, key = "FakeID", allow.cartesian = TRUE)
-		SimbCombDT <- SimbDT[bfitDT, allow.cartesian = TRUE]
-		Simb <- data.frame(SimbCombDT)
-	  	Simb$QI <- Simb$hazard * Simb$HR 
-	  	Simb <- Simb[, -1]	
+      Simb <- SimbDT[bfitDT, allow.cartesian = TRUE]
+      # Create warning message
+      Rows <- nrow(Simb)
+      if (Rows > 2000000){
+        message(paste("There are", Rows, "simulations. This may take awhile. Consider using nsim to reduce the number of simulations."))
+      }
+      Simb$QI <- Simb$hazard * Simb$HR 
+      if (is.null(Simb$strata)){
+        Simb <- Simb[, list(time, Xj, QI)]
+      } else if (!is.null(Simb$strata)){
+        Simb <- Simb[, list(time, Xj, QI, strata)]
+      }
+      Simb <- data.frame(Simb)
 	}
 
 	# Drop simulations outside of 'confidence bounds'
@@ -239,19 +261,30 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 		SubVar <- c("time", "Xj")
 	}
 
-  if (Inf %in% Simb$QI){
-  	if (isTRUE(spin)){
-		stop("spin cannot be TRUE when there are infinite values for your quantitiy of interest.")
-  	} else {
-	  	message("Warning infinite values calculated for your quantity of interest. Consider changing the difference between Xj and Xl.")
-  	}
-  }
-
   SimbPerc <- IntervalConstrict(Simb = Simb, SubVar = SubVar, qi = qi,
           QI = QI, spin = spin, ci = ci)	
 
-
   # Final clean up
-  class(SimbPerc) <- c("simspline", qi)
-  SimbPerc
+    # Subset simspline object & create a data frame of important variables
+	if (qi == "Hazard Rate"){
+		if (is.null(SimbPerc$strata)){
+			SimbPercSub <- data.frame(SimbPerc$time, SimbPerc$QI, SimbPerc$Xj)
+			names(SimbPercSub) <- c("Time", "QI", "Xj")
+		} 
+		# Currently does not support strata
+		else if (!is.null(SimbPerc$strata)) {
+			stop("coxsimSpline currently doesn''t support Hazard Rates when there are multiple stata. Sorry.")
+		}
+	} else if (qi == "Hazard Ratio"){
+	  	SimbPercSub <- data.frame(SimbPerc$Xj, SimbPerc$QI, SimbPerc$Comparison)
+	  	names(SimbPercSub) <- c("Xj", "QI", "Comparison")
+	} else if (qi == "Relative Hazard"){
+	  	SimbPercSub <- data.frame(SimbPerc$Xj, SimbPerc$QI)
+	  	names(SimbPercSub) <- c("Xj", "QI")
+	} else if (qi == "First Difference"){
+		SimbPercSub <- data.frame(SimbPerc$Xj, SimbPerc$QI, SimbPerc$Comparison)
+		names(SimbPercSub) <- c("Xj", "QI", "Comparison")
+	}
+  class(SimbPercSub) <- c("simspline", qi)
+  SimbPercSub
 }

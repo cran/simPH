@@ -1,15 +1,15 @@
 \name{simGG.simpoly}
 \alias{simGG.simpoly}
-\title{Plot simulated polynomial quantities of interest from Cox Proportional Hazards Models.}
+\title{Plot simulated polynomial quantities of interest from Cox Proportional Hazards Models}
 \usage{
   \method{simGG}{simpoly} (obj, from = NULL, to = NULL,
     xlab = NULL, ylab = NULL, title = NULL,
     smoother = "auto", spalette = "Set1", leg.name = "",
     lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3",
-    psize = 1, palpha = 0.1, ...)
+    psize = 1, alpha = 0.1, ribbons = FALSE, ...)
 }
 \arguments{
-  \item{obj}{a simpoly object.}
+  \item{obj}{a \code{simpoly} class object.}
 
   \item{xlab}{a label for the plot's x-axis.}
 
@@ -22,10 +22,10 @@
   \item{to}{numeric time to plot to. Only relevant if
   \code{qi = "Hazard Rate"}.}
 
-  \item{title}{the plot's main title}
+  \item{title}{the plot's main title.}
 
   \item{smoother}{what type of smoothing line to use to
-  summarize the plotted coefficient}
+  summarize the plotted coefficient.}
 
   \item{spalette}{colour palette for use in \code{qi =
   "Hazard Rate"}. Default palette is \code{"Set1"}. See
@@ -50,18 +50,36 @@
   \item{psize}{size of the plotted simulation points.
   Default is \code{psize = 1}. See \code{\link{ggplot2}}.}
 
-  \item{palpha}{point alpha (e.g. transparency). Default is
-  \code{palpha = 0.05}. See \code{\link{ggplot2}}.}
+  \item{alpha}{point alpha (e.g. transparency) for the
+  points or ribbons. Default is \code{alpha = 0.1}. See
+  \code{\link{ggplot2}}.}
+
+  \item{ribbons}{logical specifies whether or not to use
+  summary ribbons of the simulations rather than plotting
+  every simulation value as a point. If \code{ribbons =
+  TRUE} a plot will be created with shaded areas
+  ('ribbons') for the minimum and maximum simulation values
+  (i.e. the middle interval set with \code{qi} in
+  \code{\link{coxsimPoly}}) as well as the central 50
+  percent of this area. It also plots a line for the median
+  value of the full area, so values in \code{smoother} are
+  ignored. One of the key advantages of using ribbons
+  rather than points is that it creates plots with smaller
+  file sizes.}
 
   \item{...}{Additional arguments. (Currently ignored.)}
 }
 \value{
-  a ggplot2 object.
+  a \code{gg} \code{ggplot} class object
 }
 \description{
-  \code{simGG.simpoly} uses ggplot2 to plot simulated
-  relative quantities of interest from a \code{simpoly}
-  class object.
+  \code{simGG.simpoly} uses \link{ggplot2} to plot
+  simulated relative quantities of interest from a
+  \code{simpoly} class object.
+}
+\details{
+  Uses \link{ggplot2} to plot the quantities of interest
+  from \code{simpoly} objects.
 }
 \examples{
 # Load Carpenter (2002) data
@@ -78,15 +96,17 @@ M1 <- coxph(Surv(acttime, censor) ~ prevgenx + lethal + deathrt1 + acutediz +
 
 # Simulate simpoly First Difference
 Sim1 <- coxsimPoly(M1, b = "natreg", qi = "First Difference",
-           pow = 3, Xj = seq(1, 150, by = 5))
+           pow = 3, Xj = seq(1, 150, by = 5), nsim = 100)
 
+# dontrun
 # Simulate simpoly Hazard Ratio with spin probibility interval
-Sim2 <- coxsimPoly(M1, b = "natreg", qi = "Hazard Ratio",
-           pow = 3, Xj = seq(1, 150, by = 5), spin = TRUE)
+# Sim2 <- coxsimPoly(M1, b = "natreg", qi = "Hazard Ratio",
+#           pow = 3, Xj = seq(1, 150, by = 5), spin = TRUE)
 
 # Plot simulations
 simGG(Sim1)
-simGG(Sim2)
+# dontrun
+# simGG(Sim2)
 }
 \seealso{
   \code{\link{coxsimPoly}} and \code{\link{ggplot2}}

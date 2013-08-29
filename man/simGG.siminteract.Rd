@@ -1,15 +1,15 @@
 \name{simGG.siminteract}
 \alias{simGG.siminteract}
-\title{Plot simulated linear multiplicative interactions.}
+\title{Plot simulated linear multiplicative interactions from Cox Proportional Hazards Models}
 \usage{
   \method{simGG}{siminteract} (obj, from = NULL, to = NULL,
     xlab = NULL, ylab = NULL, title = NULL,
     smoother = "auto", spalette = "Set1", leg.name = "",
     lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3",
-    psize = 1, palpha = 0.1, ...)
+    psize = 1, alpha = 0.1, ribbons = FALSE, ...)
 }
 \arguments{
-  \item{obj}{a simlinear object}
+  \item{obj}{a \code{siminteract} class object}
 
   \item{xlab}{a label for the plot's x-axis.}
 
@@ -22,10 +22,10 @@
   \item{to}{numeric time to plot to. Only relevant if
   \code{qi = "Hazard Rate"}.}
 
-  \item{title}{the plot's main title}
+  \item{title}{the plot's main title.}
 
   \item{smoother}{what type of smoothing line to use to
-  summarize the plotted coefficient}
+  summarize the plotted coefficient.}
 
   \item{spalette}{colour palette. Not relevant for \code{qi
   = "Marginal Effect"}. Default palette is \code{"Set1"}.
@@ -43,41 +43,55 @@
   See \code{\link{ggplot2}}.}
 
   \item{pcolour}{character string colour of the simulated
-  points for relative hazards. Default is hexadecimal
-  colour \code{pcolour = '#A6CEE3'}. Only relevant if
-  \code{qi = "Marginal Effect"}.}
+  points. Default is hexadecimal colour \code{pcolour =
+  '#A6CEE3'}. Only relevant if \code{qi = "Marginal
+  Effect"}.}
 
   \item{psize}{size of the plotted simulation points.
   Default is \code{psize = 1}. See \code{\link{ggplot2}}.}
 
-  \item{palpha}{point alpha (e.g. transparency). Default is
-  \code{palpha = 0.05}. See \code{\link{ggplot2}}.}
+  \item{alpha}{point alpha (e.g. transparency) for the
+  points or ribbons. Default is \code{alpha = 0.1}. See
+  \code{\link{ggplot2}}.}
+
+  \item{ribbons}{logical specifies whether or not to use
+  summary ribbons of the simulations rather than plotting
+  every simulation value as a point. If \code{ribbons =
+  TRUE} a plot will be created with shaded areas
+  ('ribbons') for the minimum and maximum simulation values
+  (i.e. the middle interval set with \code{qi} in
+  \code{\link{coxsimInteract}}) as well as the central 50
+  percent of this area. It also plots a line for the median
+  value of the full area, so values in \code{smoother} are
+  ignored. One of the key advantages of using ribbons
+  rather than points is that it creates plots with smaller
+  file sizes.}
 
   \item{...}{Additional arguments. (Currently ignored.)}
 }
 \value{
-  a ggplot2 object
+  a \code{gg} \code{ggplot} class object
 }
 \description{
-  Uses ggplot2 to plot the quantities of interest from
-  \code{siminteract} objects, including marginal effects,
-  first differences, hazard ratios, and hazard rates. If
-  there are multiple strata, the quantities of interest
-  will be plotted in a grid by strata. Note: A dotted line
-  is created at y = 1 (0 for first difference), i.e. no
-  effect, for time-varying hazard ratio graphs. No line is
-  created for hazard rates.
+  \code{simGG.siminteract} uses \link{ggplot2} to plot the
+  quantities of interest from \code{siminteract} objects,
+  including marginal effects, first differences, hazard
+  ratios, and hazard rates.
+}
+\details{
+  Uses \link{ggplot2} to plot the quantities of interest
+  from \code{siminteract} objects, including marginal
+  effects, first differences, hazard ratios, and hazard
+  rates. If there are multiple strata, the quantities of
+  interest will be plotted in a grid by strata. Note: A
+  dotted line is created at y = 1 (0 for first difference),
+  i.e. no effect, for time-varying hazard ratio graphs. No
+  line is created for hazard rates.
 
   Note: if \code{qi = "Hazard Ratio"} or \code{qi = "First
   Difference"} then you need to have choosen more than one
   fitted value for \code{X1} in
   \code{\link{coxsimInteract}}.
-}
-\details{
-  \code{simGG.siminteract} uses ggplot2 to plot the
-  quantities of interest from \code{siminteract} objects,
-  including marginal effects, first differences, hazard
-  ratios, and hazard rates.
 }
 \examples{
 # Load Carpenter (2002) data
@@ -90,12 +104,17 @@ library(survival)
 M1 <- coxph(Surv(acttime, censor) ~ lethal*prevgenx, data = CarpenterFdaData)
 
 # Simulate Marginal Effect of lethal for multiple values of prevgenx
-Sim1 <- coxsimInteract(M1, b1 = "lethal", b2 = "prevgenx", X2 = seq(2, 115, by = 2))
-# Change the order of the covariates to make a more easily
-# interpretable hazard ratio graph.
-M2 <- coxph(Surv(acttime, censor) ~ prevgenx*lethal, data = CarpenterFdaData)
+Sim1 <- coxsimInteract(M1, b1 = "lethal", b2 = "prevgenx",
+							X2 = seq(2, 115, by = 2), nsim = 100)
+
+# Plot quantities of interest
+simGG(Sim1)
 
 ## dontrun
+# Change the order of the covariates to make a more easily
+# interpretable hazard ratio graph.
+# M2 <- coxph(Surv(acttime, censor) ~ prevgenx*lethal, data = CarpenterFdaData)
+
 # Simulate Hazard Ratio of lethal for multiple values of prevgenx
 # Sim2 <- coxsimInteract(M2, b1 = "prevgenx", b2 = "lethal",
 #                    X1 = seq(2, 115, by = 2),
@@ -109,7 +128,7 @@ M2 <- coxph(Surv(acttime, censor) ~ prevgenx*lethal, data = CarpenterFdaData)
 #                       qi = "First Difference", spin = TRUE)
 
 # Plot quantities of interest
-simGG(Sim1, xlab = "\\nprevgenx", ylab = "Marginal Effect of lethal\\n")
+# simGG(Sim1, xlab = "\\nprevgenx", ylab = "Marginal Effect of lethal\\n")
 # simGG(Sim2)
 # simGG(Sim3)
 }

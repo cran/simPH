@@ -1,24 +1,25 @@
-#' Plot simulated linear time-constant quantities of interest.
+#' Plot simulated linear time-constant quantities of interest from Cox Proportional Hazards Models
 #'
-#' \code{simGG.simlinear} uses ggplot2 to plot the quantities of interest from \code{simlinear} objects, including relative hazards, first differences, hazard ratios, and hazard rates.
+#' \code{simGG.simlinear} uses \link{ggplot2} to plot the quantities of interest from \code{simlinear} objects, including relative hazards, first differences, hazard ratios, and hazard rates.
 #'
-#' @param obj a simlinear object.
+#' @param obj a \code{simlinear} class object.
 #' @param xlab a label for the plot's x-axis.
 #' @param ylab a label of the plot's y-axis. The default uses the value of \code{qi}.
 #' @param from numeric time to start the plot from. Only relevant if \code{qi = "Hazard Rate"}.
 #' @param to numeric time to plot to. Only relevant if \code{qi = "Hazard Rate"}.
-#' @param title the plot's main title
-#' @param smoother what type of smoothing line to use to summarize the plotted coefficient
+#' @param title the plot's main title.
+#' @param smoother what type of smoothing line to use to summarize the plotted coefficient.
 #' @param spalette colour palette for use in \code{qi = "Hazard Rate"}. Default palette is \code{"Set1"}. See \code{\link{scale_colour_brewer}}.
 #' @param leg.name name of the stratified hazard rates legend. Only relevant if \code{qi = "Hazard Rate"}.
 #' @param lcolour character string colour of the smoothing line. The default is hexadecimal colour \code{lcolour = '#2B8CBE'}. Only relevant if \code{qi = "First Difference"}.
 #' @param lsize size of the smoothing line. Default is 2. See \code{\link{ggplot2}}.
 #' @param pcolour character string colour of the simulated points for relative hazards. Default is hexadecimal colour \code{pcolour = '#A6CEE3'}. Only relevant if \code{qi = "First Difference"}.
 #' @param psize size of the plotted simulation points. Default is \code{psize = 1}. See \code{\link{ggplot2}}.
-#' @param palpha point alpha (e.g. transparency). Default is \code{palpha = 0.05}. See \code{\link{ggplot2}}.
+#' @param alpha point alpha (e.g. transparency) for the points or ribbons. Default is \code{alpha = 0.1}. See \code{\link{ggplot2}}.
+#' @param ribbons logical specifies whether or not to use summary ribbons of the simulations rather than plotting every simulation value as a point. If \code{ribbons = TRUE} a plot will be created with shaded areas ('ribbons') for the minimum and maximum simulation values (i.e. the middle interval set with \code{qi} in \code{\link{coxsimLinear}}) as well as the central 50 percent of this area. It also plots a line for the median value of the full area, so values in \code{smoother} are ignored. One of the key advantages of using ribbons rather than points is that it creates plots with smaller file sizes.
 #' @param ... Additional arguments. (Currently ignored.)
 #'
-#' @return a ggplot2 object
+#' @return a \code{gg} \code{ggplot} class object
 #'
 #' @examples
 #'
@@ -45,9 +46,10 @@
 #' # Simulate and plot Hazard Rate for stafcder variable
 #' # Sim2 <- coxsimLinear(M1, b = "stafcder", nsim = 100,
 #' #						qi = "Hazard Rate", Xj = c(1237, 1600))
-#' # simGG(Sim2)
+#' # simGG(Sim2, ribbons = TRUE)
+#' 
 #'
-#' @description Uses ggplot2 to plot the quantities of interest from \code{simlinear} objects, including relative hazards, first differences, hazard ratios, and hazard rates. If there are multiple strata, the quantities of interest will be plotted in a grid by strata.
+#' @details Uses \link{ggplot2} to plot the quantities of interest from \code{simlinear} objects, including relative hazards, first differences, hazard ratios, and hazard rates. If there are multiple strata, the quantities of interest will be plotted in a grid by strata.
 #' Note: A dotted line is created at y = 1 (0 for first difference), i.e. no effect, for time-varying hazard ratio graphs. No line is created for hazard rates.
 #'
 #' @import ggplot2
@@ -61,9 +63,9 @@
 #'
 #' Carpenter, Daniel P. 2002. ''Groups, the Media, Agency Waiting Costs, and FDA Drug Approval.'' American Journal of Political Science 46(3): 490-505.
 
-simGG.simlinear <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = NULL, title = NULL, smoother = "auto", spalette = "Set1", leg.name = "", lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3", psize = 1, palpha = 0.1, ...)
+simGG.simlinear <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = NULL, title = NULL, smoother = "auto", spalette = "Set1", leg.name = "", lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3", psize = 1, alpha = 0.1, ribbons = FALSE, ...)
 {
-	Time <- HRate <- HRValue <- Xj <- QI <- NULL
+	Time <- HRate <- HRValue <- Xj <- QI <- Lower50 <- Upper50 <- Min <- Max <- Median <- NULL
 	if (!inherits(obj, "simlinear")){
     	stop("must be a simlinear object")
     }
@@ -76,67 +78,114 @@ simGG.simlinear <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = NUL
     } else {
     	ylab <- ylab
     }
-
-    # Subset simlinear object & create a data frame of important variables
-	if (qi == "Hazard Rate"){
-		colour <- NULL
-		if (is.null(obj$strata)){
-			objdf <- data.frame(obj$time, obj$QI, obj$HRValue)
-			names(objdf) <- c("Time", "HRate", "HRValue")
-		} else if (!is.null(obj$strata)) {
-		objdf <- data.frame(obj$time, obj$QI, obj$strata, obj$HRValue)
-		names(objdf) <- c("Time", "HRate", "Strata", "HRValue")
+    # Convert obj to data frame
+    class(obj) <- "data.frame"
+    # Constrict time period to plot for hazard rate
+    if (qi == "Hazard Rate"){   
+	    if (!is.null(from)){
+			obj <- subset(obj, Time >= from)
 		}
-		if (!is.null(from)){
-			objdf <- subset(objdf, Time >= from)
-  		}
-  		if (!is.null(to)){
-  			objdf <- subset(objdf, Time <= to)
-  		}
-	} else if (qi == "Hazard Ratio" | qi == "Relative Hazard" | qi == "First Difference"){
-	  	objdf <- data.frame(obj$Xj, obj$QI)
-	  	names(objdf) <- c("Xj", "QI")
-	}
+		if (!is.null(to)){
+	        	obj <- subset(obj, Time <= to)
+	    }
+    }
 
-	# Plot
-	  if (qi == "Hazard Rate"){
-	  	if (!is.null(obj$strata)) {
-	      ggplot(objdf, aes(x = Time, y = HRate, colour = factor(HRValue))) +
-	        geom_point(alpha = I(palpha), size = psize) +
-	        geom_smooth(method = smoother, size = lsize, se = FALSE) +
-	        facet_grid(.~ Strata) +
-	        xlab(xlab) + ylab(ylab) +
-	        scale_colour_brewer(palette = spalette, name = leg.name) +
-	        ggtitle(title) +
-	        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
-	        theme_bw(base_size = 15)
-    	} else if (is.null(obj$strata)){
-	      	ggplot(objdf, aes(Time, HRate, colour = factor(HRValue))) +
-	        	geom_point(shape = 21, alpha = I(palpha), size = psize) +
+	# Plot points
+	if (!isTRUE(ribbons)){
+		if (qi == "Hazard Rate"){
+	  	if (!is.null(obj$Strata)) {
+			ggplot(obj, aes(x = Time, y = HRate, colour = factor(HRValue))) +
+				facet_grid(. ~ Strata) +
+				geom_point(alpha = I(alpha), size = psize) +
+				geom_smooth(method = smoother, size = lsize, se = FALSE) +
+				xlab(xlab) + ylab(ylab) +
+				scale_colour_brewer(palette = spalette, name = leg.name) +
+				ggtitle(title) +
+				guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+				theme_bw(base_size = 15)
+    	} else if (is.null(obj$Strata)){
+	      	ggplot(obj, aes(Time, HRate, colour = factor(HRValue))) +
+	        	geom_point(shape = 21, alpha = I(alpha), size = psize) +
 		        geom_smooth(method = smoother, size = lsize, se = FALSE) +
 		        scale_colour_brewer(palette = spalette, name = leg.name) +
 		        xlab(xlab) + ylab(ylab) +
 		        ggtitle(title) +
 		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 		        theme_bw(base_size = 15)
-		}
-	} else if (qi == "First Difference"){
-		ggplot(objdf, aes(Xj, QI)) +
-	        geom_point(shape = 21, alpha = I(palpha), size = psize, colour = pcolour) +
-	        geom_smooth(method = smoother, size = lsize, se = FALSE, color = lcolour) +
-	        geom_hline(aes(yintercept = 0), linetype = "dotted") +
-	        xlab(xlab) + ylab(ylab) +
-	        ggtitle(title) +
-	        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
-	        theme_bw(base_size = 15)
-    	} else if (qi == "Hazard Ratio" | qi == "Relative Hazard"){
-		ggplot(objdf, aes(Xj, QI)) +
-	        geom_point(shape = 21, alpha = I(palpha), size = psize, colour = pcolour) +
+			}
+		} else if (qi == "First Difference"){
+			ggplot(obj, aes(Xj, QI)) +
+		        geom_point(shape = 21, alpha = I(alpha), size = psize, colour = pcolour) +
+		        geom_smooth(method = smoother, size = lsize, se = FALSE, color = lcolour) +
+		        geom_hline(aes(yintercept = 0), linetype = "dotted") +
+		        xlab(xlab) + ylab(ylab) +
+		        ggtitle(title) +
+		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        theme_bw(base_size = 15)
+		} else if (qi == "Hazard Ratio" | qi == "Relative Hazard"){
+		ggplot(obj, aes(Xj, QI)) +
+	        geom_point(shape = 21, alpha = I(alpha), size = psize, colour = pcolour) +
 	        geom_smooth(method = smoother, size = lsize, se = FALSE, color = lcolour) +
 	        geom_hline(aes(yintercept = 1), linetype = "dotted") +
 	        xlab(xlab) + ylab(ylab) +
 	        ggtitle(title) +
 	        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 	        theme_bw(base_size = 15)
-    }
+		}
+	}
+	# Plot ribbons
+	else if (isTRUE(ribbons)){
+		suppressWarnings(
+		if (qi == "Hazard Rate"){
+	  	if (!is.null(obj$Strata)) {
+			obj <- MinMaxLines(df = obj, hr = TRUE, strata = TRUE)
+			ggplot(obj, aes(x = Time, y = HRate, colour = factor(HRValue), fill = factor(HRValue))) +
+				geom_line(size = lsize) +
+				geom_ribbon(aes(ymin = Lower50, ymax = Upper50), alpha = alpha, linetype = 0) +
+				geom_ribbon(aes(ymin = Min, ymax = Max), alpha = alpha, linetype = 0) +
+				facet_grid(. ~ Strata) +
+				xlab(xlab) + ylab(ylab) +
+		        scale_colour_brewer(palette = spalette, name = leg.name) +
+		        scale_fill_brewer(palette = spalette, name = leg.name) +
+				ggtitle(title) +
+		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+				theme_bw(base_size = 15)
+    	} else if (is.null(obj$Strata)){
+			obj <- MinMaxLines(df = obj, hr = TRUE)
+	      	ggplot(obj, aes(Time, Median, colour = factor(HRValue), fill = factor(HRValue))) +
+		        geom_line(size = lsize) +
+				geom_ribbon(aes(ymin = Lower50, ymax = Upper50), alpha = alpha, linetype = 0) +
+				geom_ribbon(aes(ymin = Min, ymax = Max), alpha = alpha, linetype = 0) +
+		        scale_colour_brewer(palette = spalette, name = leg.name) +
+		        scale_fill_brewer(palette = spalette, name = leg.name) +
+		        xlab(xlab) + ylab(ylab) +
+		        ggtitle(title) +
+		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        theme_bw(base_size = 15)
+		}
+		} else if (qi == "First Difference"){
+			obj <- MinMaxLines(df = obj)
+			ggplot(obj, aes(Xj, Median)) +
+		        geom_line(size = lsize, colour = lcolour) +
+				geom_ribbon(aes(ymin = Lower50, ymax = Upper50), alpha = alpha, fill = pcolour) +
+				geom_ribbon(aes(ymin = Min, ymax = Max), alpha = alpha, fill = pcolour) +
+		        geom_hline(aes(yintercept = 0), linetype = "dotted") +
+		        xlab(xlab) + ylab(ylab) +
+		        ggtitle(title) +
+		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        theme_bw(base_size = 15)
+		} else if (qi == "Hazard Ratio" | qi == "Relative Hazard"){
+			obj <- MinMaxLines(df = obj)
+			ggplot(obj, aes(Xj, Median)) +
+		        geom_line(size = lsize, colour = lcolour) +
+				geom_ribbon(aes(ymin = Lower50, ymax = Upper50), alpha = alpha, fill = pcolour) +
+				geom_ribbon(aes(ymin = Min, ymax = Max), alpha = alpha, fill = pcolour) +
+	        	geom_hline(aes(yintercept = 1), linetype = "dotted") +
+		        xlab(xlab) + ylab(ylab) +
+		        ggtitle(title) +
+		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        theme_bw(base_size = 15)
+		}
+		)
+	}
 }
