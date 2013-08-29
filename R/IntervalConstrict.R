@@ -1,11 +1,11 @@
-#' Constrict simulations to a defined interval.
+#' Constrict simulations to a defined interval
 #'
 #' \code{IntervalConstrict} is an internal function to constrict a set of simulations to user defined interval.
 #'
 #' @param Simb character string naming the data frame with the simulations.
 #' @param SubVar character vector the variable names to subset the simulations by.
 #' @param qi character vector naming the type of quantity of interest.
-#' @param QI character string labeling the quantitiy of interest values.
+#' @param QI character string labeling the quantity of interest values.
 #' @param spin logical for whether or not to use the shortest probability interval or the central interval.
 #' @param ci numeric confidence interval measure.
 #' 
@@ -15,6 +15,17 @@
 
 IntervalConstrict <- function(Simb = Simb, SubVar = SubVar, qi = qi, QI = QI, spin = FALSE, ci = 0.95)
 {
+    if (Inf %in% Simb$QI){
+        if (isTRUE(spin)){
+            stop("spin cannot be TRUE when there are infinite values for your quantitiy of interest.")
+        } else {
+            message("Warning infinite values calculated for your quantity of interest. Consider changing the difference between Xj and Xl.")
+        }
+    }
+    if (any(Simb$QI > 1000) & isTRUE(spin)){
+    	message("Warning very large quantity of interest values. SPIn may not be found. Try spin = FALSE.")
+    }
+
 	Lower <- Upper <- NULL
 	if (qi == "Relative Hazard" |qi == "Hazard Ratio" | qi == "Hazard Ratio"){
 		lb <- 0
