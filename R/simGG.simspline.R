@@ -11,10 +11,9 @@
 #' @param to numeric time to plot to. Only relevant if \code{qi = "Hazard Rate"}.
 #' @param title the plot's main title.
 #' @param smoother what type of smoothing line to use to summarize the plotted coefficient.
-#' @param leg.name name of the stratified hazard rates legend. Only relevant if \code{qi = "Hazard Rate"}.
 #' @param lcolour character string colour of the smoothing line. The default is hexadecimal colour \code{lcolour = '#2B8CBE'}. Only relevant if \code{qi = "Relative Hazard"} or \code{qi = "First Difference"}.
-#' @param lsize size of the smoothing line. Default is 2. See \code{\link{ggplot2}}.
-#' @param pcolour character string colour of the simulated points for relative hazards. Default is hexadecimal colour \code{pcolour = '#A6CEE3'}. Only relevant if \code{qi = "Relative Hazard"} or \code{qi = "First Difference"}.
+#' @param lsize size of the smoothing line. Default is 1. See \code{\link{ggplot2}}.
+#' @param pcolour character string colour of the simulated points or ribbons (when there are not multiple sets of simulations). Default is hexadecimal colour \code{pcolour = '#A6CEE3'}. Only relevant if \code{qi = "Relative Hazard"} or \code{qi = "First Difference"} or \code{qi = "Hazard Rate"} with facets.
 #' @param psize size of the plotted simulation points. Default is \code{psize = 1}. See \code{\link{ggplot2}}.
 #' @param alpha point alpha (e.g. transparency) for the points or ribbons. Default is \code{alpha = 0.1}. See \code{\link{ggplot2}}.
 #' @param surface plot surface. Default is \code{surface = TRUE}. Only relevant if \code{qi == 'Relative Hazard'} and \code{FacetTime = NULL}.
@@ -61,7 +60,7 @@
 #' #                    Xj = seq(1, 30, by = 2), ci = 0.9, nsim = 10)  
 #'                        
 #' # Plot relative hazard
-#' # simGG(Sim1, alpha = 1)
+#' # simGG(Sim1, alpha = 0.5)
 #' 
 #' # 3D plot hazard rate
 #' # simGG(Sim2, zlab = "orderent", fit = "quadratic")
@@ -96,12 +95,15 @@
 #' @method simGG simspline
 #' @S3method simGG simspline
 
-simGG.simspline <- function(obj, FacetTime = NULL, from = NULL, to = NULL, xlab = NULL, ylab = NULL, zlab = NULL, title = NULL, smoother = "auto", leg.name = "", lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3", psize = 1, alpha = 0.1, surface = TRUE, fit = "linear", ribbons = FALSE, ...)
+simGG.simspline <- function(obj, FacetTime = NULL, from = NULL, to = NULL, xlab = NULL, ylab = NULL, zlab = NULL, title = NULL, smoother = "auto", lcolour = "#2B8CBE", lsize = 1, pcolour = "#A6CEE3", psize = 1, alpha = 0.1, surface = TRUE, fit = "linear", ribbons = FALSE, ...)
 {
 	Time <- Xj <- QI <- Lower50 <- Upper50 <- Min <- Max <- Median <- NULL
 	if (!inherits(obj, "simspline")){
     	stop("must be a simspline object")
     }
+	if (isTRUE(ribbons) & smoother != "auto"){
+	  message("The smoother argument is ignored if ribbons = TRUE. Central tendency summarised with the median.")
+	}
     # Find quantity of interest
     qi <- class(obj)[[2]]
 
@@ -134,7 +136,7 @@ simGG.simspline <- function(obj, FacetTime = NULL, from = NULL, to = NULL, xlab 
 		        geom_hline(aes(yintercept = 0), linetype = "dotted") +
 		        xlab(xlab) + ylab(ylab) +
 		        ggtitle(title) +
-		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 		        theme_bw(base_size = 15)
 		} else if (qi == "Hazard Ratio" | qi == "Relative Hazard"){
 			ggplot(obj, aes(Xj, QI)) +
@@ -143,7 +145,7 @@ simGG.simspline <- function(obj, FacetTime = NULL, from = NULL, to = NULL, xlab 
 		        geom_hline(aes(yintercept = 1), linetype = "dotted") +
 		        xlab(xlab) + ylab(ylab) +
 		        ggtitle(title) +
-		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 		        theme_bw(base_size = 15)
 	    } else if (qi == "Hazard Rate" & is.null(FacetTime)){
 	    	with(obj, scatter3d(x = Time, y = QI, z = Xj,
@@ -189,14 +191,14 @@ simGG.simspline <- function(obj, FacetTime = NULL, from = NULL, to = NULL, xlab 
 		} else if (qi == "Hazard Ratio" | qi == "Relative Hazard"){
 			obj <- MinMaxLines(df = obj)
 			ggplot(obj, aes(Xj, Median)) +
-		        geom_line(size = lsize, colour = lcolour) +
+				geom_line(size = lsize, colour = lcolour) +
 				geom_ribbon(aes(ymin = Lower50, ymax = Upper50), alpha = alpha, fill = pcolour) +
 				geom_ribbon(aes(ymin = Min, ymax = Max), alpha = alpha, fill = pcolour) +
 	        	geom_hline(aes(yintercept = 1), linetype = "dotted") +
-	        xlab(xlab) + ylab(ylab) +
-	        ggtitle(title) +
-	        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
-	        theme_bw(base_size = 15)
+	        	xlab(xlab) + ylab(ylab) +
+		        ggtitle(title) +
+		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        theme_bw(base_size = 15)
 	    } else if (qi == "Hazard Rate" & !is.null(FacetTime)){
 			SubsetTime <- function(f){
 			  Time <- NULL
@@ -216,10 +218,10 @@ simGG.simspline <- function(obj, FacetTime = NULL, from = NULL, to = NULL, xlab 
 				geom_ribbon(aes(ymin = Min, ymax = Max), alpha = alpha, fill = pcolour) +
 	        	geom_hline(aes(yintercept = 0), linetype = "dotted") +
 		        facet_grid(.~Time) +
-	        xlab(xlab) + ylab(ylab) +
-	        ggtitle(title) +
-	        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
-	        theme_bw(base_size = 15)
+		        xlab(xlab) + ylab(ylab) +
+		        ggtitle(title) +
+		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        theme_bw(base_size = 15)
 	    }
 	    )
 	}

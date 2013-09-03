@@ -9,11 +9,12 @@
 #' @param to numeric time to plot to. Only relevant if \code{qi = "Hazard Rate"}.
 #' @param title the plot's main title.
 #' @param smoother what type of smoothing line to use to summarize the plotted coefficient.
-#' @param spalette colour palette. Not relevant for \code{qi = "Marginal Effect"}. Default palette is \code{"Set1"}. See \code{\link{scale_colour_brewer}}.
-#' @param leg.name name of the stratified hazard rates legend. Only relevant if \code{qi = "Hazard Rate"}.
+#' @param spalette colour palette for when there are multiple sets of comparisons to plot. Not relevant for \code{qi = "Marginal Effect"}. Default palette is \code{"Set1"}. See \code{\link{scale_colour_brewer}}.
+#' @param legend specifies what type of legend to include (if applicable). The default is \code{legend = "legend"}. To hide the legend use \code{legend = FALSE}. See the \code{\link{discrete_scale}} for more details.
+#' @param leg.name name of the legend (if applicable).
 #' @param lcolour character string colour of the smoothing line. The default is hexadecimal colour \code{lcolour = '#2B8CBE'}. Only relevant if \code{qi = "Marginal Effect"}.
-#' @param lsize size of the smoothing line. Default is 2. See \code{\link{ggplot2}}.
-#' @param pcolour character string colour of the simulated points. Default is hexadecimal colour \code{pcolour = '#A6CEE3'}. Only relevant if \code{qi = "Marginal Effect"}.
+#' @param lsize size of the smoothing line. Default is 1. See \code{\link{ggplot2}}.
+#' @param pcolour character string colour of the simulated points or ribbons (when there are not multiple sets of simulations). Default is hexadecimal colour \code{pcolour = '#A6CEE3'}.
 #' @param psize size of the plotted simulation points. Default is \code{psize = 1}. See \code{\link{ggplot2}}.
 #' @param alpha point alpha (e.g. transparency) for the points or ribbons. Default is \code{alpha = 0.1}. See \code{\link{ggplot2}}.
 #' @param ribbons logical specifies whether or not to use summary ribbons of the simulations rather than plotting every simulation value as a point. If \code{ribbons = TRUE} a plot will be created with shaded areas ('ribbons') for the minimum and maximum simulation values (i.e. the middle interval set with \code{qi} in \code{\link{coxsimInteract}}) as well as the central 50 percent of this area. It also plots a line for the median value of the full area, so values in \code{smoother} are ignored. One of the key advantages of using ribbons rather than points is that it creates plots with smaller file sizes.
@@ -54,11 +55,16 @@
 #' #                       X1 = seq(2, 115, by = 2),
 #' #                       X2 = c(0, 1),
 #' #                       qi = "First Difference", spin = TRUE)
+#' 
+#' # Simulate Hazard Rate
+#' # Sim4 <- coxsimInteract(M2, b1 = "prevgenx", b2 = "lethal", 
+#' #                       X1 = 100, X2 = 1, qi = "Hazard Rate")
 #'                        
 #' # Plot quantities of interest
 #' # simGG(Sim1, xlab = "\nprevgenx", ylab = "Marginal Effect of lethal\n")
-#' # simGG(Sim2)
+#' # simGG(Sim2, ribbons = TRUE)
 #' # simGG(Sim3)
+#' # simGG(Sim4, to = 150, ribbons = TRUE, legend = FALSE)
 #'
 #' @details Uses \link{ggplot2} to plot the quantities of interest from \code{siminteract} objects, including marginal effects, first differences, hazard ratios, and hazard rates. If there are multiple strata, the quantities of interest will be plotted in a grid by strata.
 #' Note: A dotted line is created at y = 1 (0 for first difference), i.e. no effect, for time-varying hazard ratio graphs. No line is created for hazard rates.
@@ -77,65 +83,68 @@
 #'
 #' Carpenter, Daniel P. 2002. ''Groups, the Media, Agency Waiting Costs, and FDA Drug Approval.'' American Journal of Political Science 46(3): 490-505.
 
-simGG.siminteract <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = NULL, title = NULL, smoother = "auto", spalette = "Set1", leg.name = "", lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3", psize = 1, alpha = 0.1, ribbons = FALSE, ...)
+simGG.siminteract <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = NULL, title = NULL, smoother = "auto", spalette = "Set1", legend = "legend", leg.name = "", lcolour = "#2B8CBE", lsize = 1, pcolour = "#A6CEE3", psize = 1, alpha = 0.1, ribbons = FALSE, ...)
 {
 	HRate <- Lower50 <- Upper50 <- Min <- Max <- Median <- NULL
 	Time <- QI <- HRValue <- X1 <- X2 <- NULL
 	if (!inherits(obj, "siminteract")){
-    	stop("must be a siminteract object")
-    }
-    # Find quantity of interest
-    qi <- class(obj)[[2]]
+    stop("must be a siminteract object")
+  }
+  if (isTRUE(ribbons) & smoother != "auto"){
+    message("The smoother argument is ignored if ribbons = TRUE. Central tendency summarised with the median.")
+  }
+  # Find quantity of interest
+  qi <- class(obj)[[2]]
 
-    # Create y-axis label
-    if (is.null(ylab)){
-    	ylab <- paste(qi, "\n")
-    } else {
-    	ylab <- ylab
-    }
-    # Convert obj to data frame
-    class(obj) <- "data.frame"
-    # Constrict time period to plot for hazard rate
-    if (qi == "Hazard Rate"){   
-	    if (!is.null(from)){
-			obj <- subset(obj, Time >= from)
-		}
-		if (!is.null(to)){
-	        	obj <- subset(obj, Time <= to)
-	    }
-    }
+  # Create y-axis label
+  if (is.null(ylab)){
+  	ylab <- paste(qi, "\n")
+  } else {
+  	ylab <- ylab
+  }
+  # Convert obj to data frame
+  class(obj) <- "data.frame"
+  # Constrict time period to plot for hazard rate
+  if (qi == "Hazard Rate"){   
+	   if (!is.null(from)){
+		  obj <- subset(obj, Time >= from)
+	  }
+	if (!is.null(to)){
+	       	obj <- subset(obj, Time <= to)
+	   }
+  }
 	# Plot points
 	if (!isTRUE(ribbons)){
 		if (qi == "Hazard Rate"){
 		  	if (!is.null(obj$strata)) {
-		      ggplot(obj, aes(x = Time, y = QI, colour = factor(HRValue))) +
-		        geom_point(alpha = I(alpha), size = psize) +
+		      ggplot(obj, aes(x = Time, y = HRate, colour = factor(HRValue))) +
+		        geom_point(alpha = alpha, size = psize) +
 		        geom_smooth(method = smoother, size = lsize, se = FALSE) +
 		        facet_grid(.~ Strata) +
 		        xlab(xlab) + ylab(ylab) +
-		        scale_colour_brewer(palette = spalette, name = leg.name) +
+		        scale_colour_brewer(palette = spalette, name = leg.name, guide = legend) +
 		        ggtitle(title) +
-		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 		        theme_bw(base_size = 15)
 	    	} else if (is.null(obj$strata)){
-		      	ggplot(obj, aes(Time, QI, colour = factor(HRValue))) +
-		        	geom_point(shape = 21, alpha = I(alpha), size = psize) +
+		      	ggplot(obj, aes(x = Time, y = HRate, colour = factor(HRValue))) +
+		        	geom_point(shape = 21, alpha = alpha, size = psize) +
 			        geom_smooth(method = smoother, size = lsize, se = FALSE) +
-			        scale_colour_brewer(palette = spalette, name = leg.name) +
+			        scale_colour_brewer(palette = spalette, name = leg.name, guide = legend) +
 			        xlab(xlab) + ylab(ylab) +
 			        ggtitle(title) +
-			        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
-			        theme_bw(base_size = 15)
+			        #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        theme_bw(base_size = 15)
 			}
 		} 
 		else if (qi == "Marginal Effect"){
 			ggplot(obj, aes(X2, QI)) +
-			    geom_point(shape = 21, alpha = I(alpha), size = psize, colour = pcolour) +
+			    geom_point(shape = 21, alpha = alpha, size = psize, colour = pcolour) +
 		        geom_smooth(method = smoother, size = lsize, se = FALSE, color = lcolour) +  
 		        geom_hline(aes(yintercept = 0), linetype = "dotted") + 
 			    xlab(xlab) + ylab(ylab) +
 			    ggtitle(title) +
-			    guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+			    #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 			    theme_bw(base_size = 15)
 		} 
 		else if (qi == "First Difference"){
@@ -144,13 +153,13 @@ simGG.siminteract <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = N
 				message("X1 must have more than one fitted value.")
 			} else {
 				ggplot(obj, aes(X1, QI, colour = factor(X2), group = factor(X2))) +
-			        geom_point(shape = 21, alpha = I(alpha), size = psize) +
+			        geom_point(shape = 21, alpha = alpha, size = psize) +
 			        geom_smooth(method = smoother, size = lsize, se = FALSE) +
 			        geom_hline(aes(yintercept = 0), linetype = "dotted") +
-			        scale_colour_brewer(palette = spalette, name = leg.name) +
+			        scale_colour_brewer(palette = spalette, name = leg.name, guide = legend) +
 			        xlab(xlab) + ylab(ylab) +
 			        ggtitle(title) +
-			        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+			        #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 			        theme_bw(base_size = 15)
 		    }
 		} 
@@ -160,13 +169,13 @@ simGG.siminteract <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = N
 				message("X1 must have more than one fitted value.")
 			} else {
 				ggplot(obj, aes(X1, QI, colour = factor(X2), group = factor(X2))) +
-			        geom_point(shape = 21, alpha = I(alpha), size = psize) +
+			        geom_point(shape = 21, alpha = alpha, size = psize) +
 			        geom_smooth(method = smoother, size = lsize, se = FALSE) +
 			        geom_hline(aes(yintercept = 1), linetype = "dotted") +
-			        scale_colour_brewer(palette = spalette, name = leg.name) +
+			        scale_colour_brewer(palette = spalette, name = leg.name, guide = legend) +
 			        xlab(xlab) + ylab(ylab) +
 			        ggtitle(title) +
-			        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+			        #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 			        theme_bw(base_size = 15)
 		    }
 	    }
@@ -183,22 +192,22 @@ simGG.siminteract <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = N
 				geom_ribbon(aes(ymin = Min, ymax = Max), alpha = alpha, linetype = 0) +
 				facet_grid(. ~ Strata) +
 				xlab(xlab) + ylab(ylab) +
-		        scale_colour_brewer(palette = spalette, name = leg.name) +
-		        scale_fill_brewer(palette = spalette, name = leg.name) +
+		        scale_colour_brewer(palette = spalette, name = leg.name, guide = legend) +
+		        scale_fill_brewer(palette = spalette, name = leg.name, guide = legend) +
 				ggtitle(title) +
-		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 			theme_bw(base_size = 15)
     	} else if (is.null(obj$Strata)){
 			obj <- MinMaxLines(df = obj, hr = TRUE)
 	      	ggplot(obj, aes(Time, Median, colour = factor(HRValue), fill = factor(HRValue))) +
 		        geom_line(size = lsize) +
-				geom_ribbon(aes(ymin = Lower50, ymax = Upper50), ailpha = alpha, linetype = 0) +
+				geom_ribbon(aes(ymin = Lower50, ymax = Upper50), alpha = alpha, linetype = 0) +
 				geom_ribbon(aes(ymin = Min, ymax = Max), alpha = alpha, linetype = 0) +
-		        scale_colour_brewer(palette = spalette, name = leg.name) +
-		        scale_fill_brewer(palette = spalette, name = leg.name) +
+		        scale_colour_brewer(palette = spalette, name = leg.name, guide = legend) +
+		        scale_fill_brewer(palette = spalette, name = leg.name, guide = legend) +
 		        xlab(xlab) + ylab(ylab) +
 		        ggtitle(title) +
-		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+		        #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 		        theme_bw(base_size = 15)
 			}
 		} 
@@ -211,7 +220,6 @@ simGG.siminteract <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = N
 	        	geom_hline(aes(yintercept = 1), linetype = "dotted") +
 		        xlab(xlab) + ylab(ylab) +
 		        ggtitle(title) +
-		        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 		        theme_bw(base_size = 15)
 		} 
 		else if (qi == "Hazard Ratio" | qi == "First Difference"){
@@ -225,11 +233,11 @@ simGG.siminteract <- function(obj, from = NULL, to = NULL, xlab = NULL, ylab = N
 					geom_ribbon(aes(ymin = Lower50, ymax = Upper50), alpha = alpha, linetype = 0) +
 					geom_ribbon(aes(ymin = Min, ymax = Max), alpha = alpha, linetype = 0) +
 					geom_hline(aes(yintercept = 1), linetype = "dotted") +
-					scale_colour_brewer(palette = spalette, name = leg.name) +
-			        scale_fill_brewer(palette = spalette, name = leg.name) +
+					scale_colour_brewer(palette = spalette, name = leg.name, guide = legend) +
+			        scale_fill_brewer(palette = spalette, name = leg.name, guide = legend) +
 			        xlab(xlab) + ylab(ylab) +
 			        ggtitle(title) +
-			        guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+			        #guides(colour = guide_legend(override.aes = list(alpha = 1))) +
 					theme_bw(base_size = 15)
 		    }
 	    }

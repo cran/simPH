@@ -4,9 +4,10 @@
 \usage{
   \method{simGG}{simlinear} (obj, from = NULL, to = NULL,
     xlab = NULL, ylab = NULL, title = NULL,
-    smoother = "auto", spalette = "Set1", leg.name = "",
-    lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3",
-    psize = 1, alpha = 0.1, ribbons = FALSE, ...)
+    smoother = "auto", spalette = "Set1",
+    legend = "legend", leg.name = "", lcolour = "#2B8CBE",
+    lsize = 1, pcolour = "#A6CEE3", psize = 1, alpha = 0.1,
+    ribbons = FALSE, ...)
 }
 \arguments{
   \item{obj}{a \code{simlinear} class object.}
@@ -27,25 +28,29 @@
   \item{smoother}{what type of smoothing line to use to
   summarize the plotted coefficient.}
 
-  \item{spalette}{colour palette for use in \code{qi =
-  "Hazard Rate"}. Default palette is \code{"Set1"}. See
-  \code{\link{scale_colour_brewer}}.}
+  \item{spalette}{colour palette for when there are
+  multiple sets of comparisons to plot. Default palette is
+  \code{"Set1"}. See \code{\link{scale_colour_brewer}}.}
 
-  \item{leg.name}{name of the stratified hazard rates
-  legend. Only relevant if \code{qi = "Hazard Rate"}.}
+  \item{legend}{specifies what type of legend to include
+  (if applicable). The default is \code{legend = "legend"}.
+  To hide the legend use \code{legend = FALSE}. See the
+  \code{\link{discrete_scale}} for more details.}
+
+  \item{leg.name}{name of the legend (if applicable).}
 
   \item{lcolour}{character string colour of the smoothing
   line. The default is hexadecimal colour \code{lcolour =
   '#2B8CBE'}. Only relevant if \code{qi = "First
   Difference"}.}
 
-  \item{lsize}{size of the smoothing line. Default is 2.
+  \item{lsize}{size of the smoothing line. Default is 1.
   See \code{\link{ggplot2}}.}
 
   \item{pcolour}{character string colour of the simulated
-  points for relative hazards. Default is hexadecimal
-  colour \code{pcolour = '#A6CEE3'}. Only relevant if
-  \code{qi = "First Difference"}.}
+  points or ribbons (when there are not multiple sets of
+  simulations). Default is hexadecimal colour \code{pcolour
+  = '#A6CEE3'}.}
 
   \item{psize}{size of the plotted simulation points.
   Default is \code{psize = 1}. See \code{\link{ggplot2}}.}
@@ -108,7 +113,6 @@
 #						Xj = seq(1237, 1600, by = 2), spin = TRUE)
 # simGG(Sim1)
 
-## dontrun
 # Simulate and plot Hazard Rate for stafcder variable
 # Sim2 <- coxsimLinear(M1, b = "stafcder", nsim = 100,
 #						qi = "Hazard Rate", Xj = c(1237, 1600))
