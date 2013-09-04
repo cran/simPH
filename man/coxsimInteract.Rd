@@ -51,7 +51,7 @@
 
   \item{spin}{logical, whether or not to keep only the
   shortest probability interval rather than the middle
-  simulations.}
+  simulations. Currently not supported for hazard rates.}
 }
 \value{
   a \code{siminteract} class object
@@ -111,7 +111,7 @@ Sim1 <- coxsimInteract(M1, b1 = "lethal", b2 = "prevgenx",
 
 # Simulate Hazard Rate
 # Sim4 <- coxsimInteract(M2, b1 = "prevgenx", b2 = "lethal",
-#                       X1 = c(90), X2 = c(1), qi = "Hazard Rate",
+#                       X1 = 90, X2 = 1, qi = "Hazard Rate",
 #                       means = TRUE)
 }
 \references{

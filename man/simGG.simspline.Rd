@@ -5,9 +5,9 @@
   \method{simGG}{simspline} (obj, FacetTime = NULL,
     from = NULL, to = NULL, xlab = NULL, ylab = NULL,
     zlab = NULL, title = NULL, smoother = "auto",
-    leg.name = "", lcolour = "#2B8CBE", lsize = 2,
-    pcolour = "#A6CEE3", psize = 1, alpha = 0.1,
-    surface = TRUE, fit = "linear", ribbons = FALSE, ...)
+    lcolour = "#2B8CBE", lsize = 1, pcolour = "#A6CEE3",
+    psize = 1, alpha = 0.1, surface = TRUE, fit = "linear",
+    ribbons = FALSE, ...)
 }
 \arguments{
   \item{obj}{a \code{simspline} class object}
@@ -38,22 +38,20 @@
   \item{smoother}{what type of smoothing line to use to
   summarize the plotted coefficient.}
 
-  \item{leg.name}{name of the stratified hazard rates
-  legend. Only relevant if \code{qi = "Hazard Rate"}.}
-
   \item{lcolour}{character string colour of the smoothing
   line. The default is hexadecimal colour \code{lcolour =
   '#2B8CBE'}. Only relevant if \code{qi = "Relative
   Hazard"} or \code{qi = "First Difference"}.}
 
-  \item{lsize}{size of the smoothing line. Default is 2.
+  \item{lsize}{size of the smoothing line. Default is 1.
   See \code{\link{ggplot2}}.}
 
   \item{pcolour}{character string colour of the simulated
-  points for relative hazards. Default is hexadecimal
-  colour \code{pcolour = '#A6CEE3'}. Only relevant if
-  \code{qi = "Relative Hazard"} or \code{qi = "First
-  Difference"}.}
+  points or ribbons (when there are not multiple sets of
+  simulations). Default is hexadecimal colour \code{pcolour
+  = '#A6CEE3'}. Only relevant if \code{qi = "Relative
+  Hazard"} or \code{qi = "First Difference"} or \code{qi =
+  "Hazard Rate"} with facets.}
 
   \item{psize}{size of the plotted simulation points.
   Default is \code{psize = 1}. See \code{\link{ggplot2}}.}
@@ -149,7 +147,7 @@
 #                    Xj = seq(1, 30, by = 2), ci = 0.9, nsim = 10)
 
 # Plot relative hazard
-# simGG(Sim1, alpha = 1)
+# simGG(Sim1, alpha = 0.5)
 
 # 3D plot hazard rate
 # simGG(Sim2, zlab = "orderent", fit = "quadratic")

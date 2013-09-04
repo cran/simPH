@@ -4,9 +4,9 @@
 \usage{
   \method{simGG}{simtvc} (obj, from = NULL, to = NULL,
     xlab = NULL, ylab = NULL, title = NULL,
-    smoother = "auto", spalette = "Set1", leg.name = "",
-    lcolour = "#2B8CBE", lsize = 2, pcolour = "#A6CEE3",
-    psize = 1, alpha = 0.1, ribbons = FALSE, ...)
+    smoother = "auto", spalette = "Set1",
+    legend = "legend", leg.name = "", lsize = 1, psize = 1,
+    alpha = 0.1, ribbons = FALSE, ...)
 }
 \arguments{
   \item{obj}{a \code{simtvc} class object}
@@ -25,26 +25,19 @@
   \item{smoother}{what type of smoothing line to use to
   summarize the plotted coefficient.}
 
-  \item{spalette}{colour palette for use in \code{qi =
-  "Hazard Rate"}. Default palette is \code{"Set1"}. See
-  \code{\link{scale_colour_brewer}}.}
+  \item{spalette}{colour palette for when there are
+  multiple sets of comparisons to plot. Default palette is
+  \code{"Set1"}. See \code{\link{scale_colour_brewer}}.}
 
-  \item{leg.name}{name of the stratified hazard rates
-  legend. Only relevant if \code{qi = "Hazard Rate"}.}
+  \item{legend}{specifies what type of legend to include
+  (if applicable). The default is \code{legend = "legend"}.
+  To hide the legend use \code{legend = FALSE}. See the
+  \code{\link{discrete_scale}} for more details.}
 
-  \item{lcolour}{character string colour of the smoothing
-  line. The default is hexadecimal colour \code{lcolour =
-  '#2B8CBE'}. Only relevant if \code{qi = "Relative
-  Hazard"} or \code{qi = "First Difference"}.}
+  \item{leg.name}{name of the legend (if applicable).}
 
-  \item{lsize}{size of the smoothing line. Default is 2.
+  \item{lsize}{size of the smoothing line. Default is 1.
   See \code{\link{ggplot2}}.}
-
-  \item{pcolour}{character string colour of the simulated
-  points for relative hazards. Default is hexadecimal
-  colour \code{pcolour = '#A6CEE3'}. Only relevant if
-  \code{qi = "Relative Hazard"} or \code{qi = "First
-  Difference"}.}
 
   \item{psize}{size of the plotted simulation points.
   Default is \code{psize = 1}. See \code{\link{ggplot2}}.}
@@ -97,8 +90,8 @@
 # library(survival)
 
 # Create natural log time interactions
-#Golubtvc <- function(x){
-#  assign(paste0("l", x), tvc(GolubEUPData, b = x, tvar = "end", tfun = "log"))
+# Golubtvc <- function(x){
+# tvc(data = GolubEUPData, b = x, tvar = "end", tfun = "log")
 # }
 
 # GolubEUPData$Lcoop <-Golubtvc("coop")
@@ -137,7 +130,7 @@
 #                  by = 15, ci = 0.99)
 
 # Create plots
-# simGG(Sim1)
+# simGG(Sim1, legend = FALSE)
 # simGG(Sim2)
 # simGG(Sim3, leg.name = "Comparision", from = 1200, ribbons = TRUE)
 }
