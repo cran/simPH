@@ -1,9 +1,9 @@
-c978a19ca2e2df05c4cc825d135fa7c6 *DESCRIPTION
+e7233f2eae3df3ed7332dc5e352a0e00 *DESCRIPTION
 90c9678a03f9115bb099d33e16013d19 *NAMESPACE
-2c2c3b54ac173d8cc2ff1764aafcec3e *NEWS
+8c5f47104cdabeef0788a4dd87b706ed *NEWS
 9438a0864b5250422151d148e6488920 *R/CarpenterFdaData.R
 eae10dc58faf0e0616aaef31b9d12c96 *R/GolubEUPData.R
-9a58270d55ce5b70d7450d848e1a697a *R/IntervalConstrict.R
+8f6e9002fd17c4adabfd4bdafdf157d6 *R/IntervalConstrict.R
 40d766141778e8fdd1260a45ae998b19 *R/MinMaxLines.R
 4c641316466a23beaa7c4023b32f21bb *R/SPInBounds.R
 07ae23cfdfb6dee43170e25ac8bb5702 *R/coxsimInteract.R
@@ -16,10 +16,10 @@ d695253aa6beb0f17a956e0c5ea4c902 *R/simGG.r
 b21ea9197ffdf9b9b9c0fcdb67beab30 *R/simGG.siminteract.R
 25ce1e76bfc57889d7d89c4e9c920333 *R/simGG.simlinear.R
 46e736d178be4375390a7587760c619e *R/simGG.simpoly.R
-2e3eb9253f400151df3223ef8848053f *R/simGG.simspline.R
+49757bdf8bd65f3653dc5c53d1a1502a *R/simGG.simspline.R
 3f7abee2d59960f9ca6ac9d047c307a4 *R/simGG.simtvc.R
 d4efdff118c3e89e23612815f6dcef28 *R/tvc.R
-9aa7c60475128a55959f5349e1dd79c9 *README.md
+155640a70651519802cbbbf8d81e0f8a *README.md
 214abea6114be707032b2878d23bbbcf *data/CarpenterFdaData.tab.gz
 970a7548df36250418055a24d766260d *data/GolubEUPData.tab.gz
 fd4a174593dd1a619476fdd7c28bb0da *man/CarpenterFdaData.Rd
@@ -34,6 +34,6 @@ adf44d9b3fbb127be34d383f206a17cb *man/ggfitStrata.Rd
 c5159253721a672f02b2b7178c33fcc2 *man/simGG.siminteract.Rd
 d24b325b25ec95819baa70f2b5bb3484 *man/simGG.simlinear.Rd
 0681e285e6e994f0abce94eadfbae1a2 *man/simGG.simpoly.Rd
-6618458c8581dac8947850c9994a2fb6 *man/simGG.simspline.Rd
+6f2a9fc431455de324a4786dba552d70 *man/simGG.simspline.Rd
 2605a4c351f26b61e4ad3354c49e3be3 *man/simGG.simtvc.Rd
 345a8f9859ea6bdc9696f0f94617aacc *man/tvc.Rd
