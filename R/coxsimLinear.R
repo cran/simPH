@@ -1,19 +1,19 @@
-#' Simulate quantities of interest for linear time constant covariates from Cox Proportional Hazards models
+#' Simulate quantities of interest for linear covariates that are not interacted with time from Cox Proportional Hazards models
 #'
-#' \code{coxsimLinear} simulates relative hazards, first differences, and hazard ratios for time-constant covariates from models estimated with \code{\link{coxph}} using the multivariate normal distribution. These can be plotted with \code{\link{simGG}}.
+#' \code{coxsimLinear} simulates relative hazards, first differences, and hazard ratios for linear covariates that are not interacted with time from models estimated with \code{\link{coxph}} using the multivariate normal distribution. These can be plotted with \code{\link{simGG}}.
 #' @param obj a \code{\link{coxph}} class fitted model object.
 #' @param b character string name of the coefficient you would like to simulate.
 #' @param qi quantity of interest to simulate. Values can be \code{"Relative Hazard"}, \code{"First Difference"}, \code{"Hazard Ratio"}, and \code{"Hazard Rate"}. The default is \code{qi = "Relative Hazard"}. If \code{qi = "Hazard Rate"} and the \code{coxph} model has strata, then hazard rates for each strata will also be calculated.
 #' @param Xj numeric vector of fitted values for \code{b} to simulate for.
 #' @param Xl numeric vector of values to compare \code{Xj} to. Note if \code{code = "Relative Hazard"} only \code{Xj} is relevant.
-#' @param means logical, whether or not to use the mean values to fit the hazard rate for covaraiates other than \code{b}. 
+#' @param means logical, whether or not to use the mean values to fit the hazard rate for covaraiates other than \code{b}. Note: EXPERIMENTAL. \code{lines} are not currently supported in \code{\link{simGG}} if \code{means = TRUE}.
 #' @param nsim the number of simulations to run per value of X. Default is \code{nsim = 1000}. Note: it does not currently support models that include polynomials created by \code{\link{I}}.
 #' @param ci the proportion of simulations to keep. The default is \code{ci = 0.95}, i.e. keep the middle 95 percent. If \code{spin = TRUE} then \code{ci} is the confidence level of the shortest probability interval. Any value from 0 through 1 may be used.
-#' @param spin logical, whether or not to keep only the shortest probability interval rather than the middle simulations. Currently not supported for hazard rates.
+#' @param spin logical, whether or not to keep only the shortest probability interval rather than the middle simulations. Currently not supported for Hazard Rates.
 #'
 #' @return a \code{simlinear} object
 #'
-#' @description Simulates relative hazards, first differences, hazard ratios, and hazard rates for linear time-constant covariates from Cox Proportional Hazard models. These can be plotted with \code{\link{simGG}}.
+#' @description Simulates relative hazards, first differences, hazard ratios, and hazard rates for linear, non-time interacted covariates from Cox Proportional Hazard models. These can be plotted with \code{\link{simGG}}.
 #'
 #'
 #' @examples
@@ -32,18 +32,19 @@
 #'
 #' # Simulate Hazard Ratios
 #' Sim1 <- coxsimLinear(M1, b = "stafcder", 
-#'                        Xj = c(1237, 1600), 
-#'                        Xl = c(1000, 1000), 
-#'                        spin = TRUE, ci = 0.99)
+#'                      Xj = c(1237, 1600), 
+#'                      Xl = c(1000, 1000), 
+#'                      qi = "Hazard Ratio",
+#'                      spin = TRUE, ci = 0.99)
 #'
 #' ## dontrun
 #' # Simulate Hazard Rates
-#' # Sim2 <- coxsimLinear(M1, b = "stafcder", 
-#' #                       qi = "Hazard Rate", 
-#' #                       Xj = 1237, 
-#' #                       ci = 0.99, means = TRUE)
+#' # Sim2 <- coxsimLinear(M1, b = "stafcder",  
+#' #                      Xj = 1237, 
+#' #                      ci = 0.99)
 #'
 #' @seealso \code{\link{simGG}}, \code{\link{survival}}, \code{\link{strata}}, and \code{\link{coxph}}
+#'
 #' @references Licht, Amanda A. 2011. ''Change Comes with Time: Substantive Interpretation of Nonproportional Hazards in Event History Analysis.'' Political Analysis 19: 227-43.
 #'
 #' King, Gary, Michael Tomz, and Jason Wittenberg. 2000. ''Making the Most of Statistical Analyses: Improving Interpretation and Presentation.'' American Journal of Political Science 44(2): 347-61.
@@ -53,12 +54,12 @@
 #' @import data.table
 #' @importFrom reshape2 melt
 #' @importFrom survival basehaz
-#' @importFrom MSBVAR rmultnorm
+#' @importFrom MASS mvrnorm
 #' @export
 
 coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, means = FALSE, nsim = 1000, ci = 0.95, spin = FALSE)
 {	
-  HRValue <- strata <- QI <- NULL
+  HRValue <- strata <- QI <- SimID <- NULL
   if (qi != "Hazard Rate" & isTRUE(means)){
     stop("means can only be TRUE when qi = 'Hazard Rate'.")
   }
@@ -85,12 +86,15 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
     MeansMessage <- TRUE
   }
 
+  # Create simulation ID variable
+  SimID <- 1:nsim
+
   # Parameter estimates & Variance/Covariance matrix
 	Coef <- matrix(obj$coefficients)
 	VC <- vcov(obj)
 	
 	# Draw covariate estimates from the multivariate normal distribution	    
-	Drawn <- rmultnorm(n = nsim, mu = Coef, vmat = VC)
+  Drawn <- mvrnorm(n = nsim, mu = Coef, Sigma = VC)
 	DrawnDF <- data.frame(Drawn)
 	dfn <- names(DrawnDF)
 
@@ -98,8 +102,8 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
   if (!isTRUE(means)){
   	# Subset simulations to only include b
   	bpos <- match(b, dfn)
-  	Simb <- data.frame(DrawnDF[, bpos])
-  	names(Simb) <- "Coef"
+  	Simb <- data.frame(SimID, DrawnDF[, bpos])
+  	names(Simb) <- c("SimID", "Coef")
 
     # Find quantity of interest
     if (qi == "Relative Hazard"){
@@ -147,9 +151,9 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
         }
         Simb$QI <- Simb$hazard * Simb$HR 
         if (is.null(Simb$strata)){
-          Simb <- Simb[, list(time, Xj, QI, HRValue)]
+          Simb <- Simb[, list(SimID, time, Xj, QI, HRValue)]
         } else if (!is.null(Simb$strata)){
-          Simb <- Simb[, list(time, Xj, QI, HRValue, strata)]
+          Simb <- Simb[, list(SimID, time, Xj, QI, HRValue, strata)]
         }
         Simb <- data.frame(Simb)
     }
@@ -223,23 +227,43 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
   	SubVar <- c("time", "Xj")
   }
 
-  SimbPerc <- IntervalConstrict(Simb = Simb, SubVar = SubVar, qi = qi,
-                                QI = QI, spin = spin, ci = ci)
+  SimbPerc <- IntervalConstrict(Simb = Simb, SubVar = SubVar, 
+                        qi = qi, QI = QI, spin = spin, ci = ci)
 
   # Final clean up
   # Subset simlinear object & create a data frame of important variables
-  if (qi == "Hazard Rate"){
-    if (is.null(SimbPerc$strata)){
-      SimPercSub <- data.frame(SimbPerc$time, SimbPerc$QI, SimbPerc$HRValue)
-      names(SimPercSub) <- c("Time", "HRate", "HRValue")
+  if (qi == "Hazard Rate" & !isTRUE(means)){
+    if (is.null(obj$strata)){
+      SimbPercSub <- data.frame(SimbPerc$SimID, 
+                              SimbPerc$time, SimbPerc$QI,
+                              SimbPerc$HRValue)
+      names(SimbPercSub) <- c("SimID", "Time", "HRate", 
+                            "HRValue")
     } else if (!is.null(SimbPerc$strata)) {
-    SimPercSub <- data.frame(SimbPerc$time, SimbPerc$QI, SimbPerc$strata, SimbPerc$HRValue)
-    names(SimPercSub) <- c("Time", "HRate", "Strata", "HRValue")
+    SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$time, 
+                    SimbPerc$QI, SimbPerc$strata, 
+                    SimbPerc$HRValue)
+    names(SimbPercSub) <- c("SimID", "Time", "HRate", 
+                          "Strata", "HRValue")
+    }
+  } else if (qi == "Hazard Rate" & isTRUE(means)){
+    if (is.null(obj$strata)){
+      SimbPercSub <- data.frame(SimbPerc$time, SimbPerc$QI,
+                              SimbPerc$HRValue)
+      names(SimbPercSub) <- c("Time", "HRate", 
+                            "HRValue")
+    } else if (!is.null(SimbPerc$strata)) {
+    SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$time, 
+                    SimbPerc$QI, SimbPerc$strata, 
+                    SimbPerc$HRValue)
+    names(SimbPercSub) <- c("SimID", "Time", "HRate", 
+                          "Strata", "HRValue")
     }
   } else if (qi == "Hazard Ratio" | qi == "Relative Hazard" | qi == "First Difference"){
-    SimPercSub <- data.frame(SimbPerc$Xj, SimbPerc$QI)
-    names(SimPercSub) <- c("Xj", "QI")
+    SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$Xj, 
+                             SimbPerc$QI)
+    names(SimbPercSub) <- c("SimID", "Xj", "QI")
   }
-  class(SimPercSub) <- c("simlinear", qi)
-  SimPercSub
+  class(SimbPercSub) <- c("simlinear", qi)
+  SimbPercSub
 }

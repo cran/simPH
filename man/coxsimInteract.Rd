@@ -2,9 +2,8 @@
 \alias{coxsimInteract}
 \title{Simulate quantities of interest for linear multiplicative interactions from Cox Proportional Hazards models}
 \usage{
-  coxsimInteract(obj, b1, b2, qi = "Marginal Effect",
-    X1 = NULL, X2 = NULL, means = FALSE, expMarg = TRUE,
-    nsim = 1000, ci = 0.95, spin = FALSE)
+coxsimInteract(obj, b1, b2, qi = "Marginal Effect", X1 = NULL, X2 = NULL,
+  means = FALSE, expMarg = TRUE, nsim = 1000, ci = 0.95, spin = FALSE)
 }
 \arguments{
   \item{obj}{a \code{\link{coxph}} class fitted model
@@ -38,7 +37,9 @@
   values to fit the hazard rate for covaraiates other than
   \code{b1} \code{b2} and \code{b1*b2}. Note: it does not
   currently support models that include polynomials created
-  by \code{\link{I}}.i}
+  by \code{\link{I}}. Note: EXPERIMENTAL. \code{lines} are
+  not currently supported in \code{\link{simGG}} if
+  \code{means = TRUE}.}
 
   \item{expMarg}{logical. Whether or not to exponentiate
   the marginal effect.}
@@ -57,29 +58,29 @@
   simulations. Currently not supported for hazard rates.}
 }
 \value{
-  a \code{siminteract} class object
+a \code{siminteract} class object
 }
 \description{
-  \code{coxsimInteract} simulates quantities of interest
-  for linear multiplicative interactions using multivariate
-  normal distributions. These can be plotted with
-  \code{\link{simGG}}.
+\code{coxsimInteract} simulates quantities of interest for
+linear multiplicative interactions using multivariate
+normal distributions. These can be plotted with
+\code{\link{simGG}}.
 }
 \details{
-  Simulates marginal effects, first differences, hazard
-  ratios, and hazard rates for linear multiplicative
-  interactions. Marginal effects are calculated as in
-  Brambor et al. (2006) with the addition that we take the
-  exponent, so that it resembles a hazard ratio. You choose
-  not to take the exponent by setting the argument
-  \code{expMarg = FALSE}. For an interaction between
-  variables \eqn{X} and \eqn{Z} then the marginal effect
-  for \eqn{X} is: \deqn{ME_{X} = exp(\beta_{X} +
-  \beta_{XZ}Z).}
+Simulates marginal effects, first differences, hazard
+ratios, and hazard rates for linear multiplicative
+interactions. Marginal effects are calculated as in Brambor
+et al. (2006) with the addition that we take the exponent,
+so that it resembles a hazard ratio. You can choose not to
+take the exponent by setting the argument \code{expMarg =
+FALSE}. For an interaction between variables \eqn{X} and
+\eqn{Z} the marginal effect for \eqn{X} is: \deqn{ME_{X} =
+e^(\beta_{X} + \beta_{XZ}Z)}{ME[X] = exp(\beta[X] +
+\beta[XZ]Z)}
 
-  Note that for First Differences the comparison is not
-  between two values of the same variable but two values of
-  the constitute variable and 0.
+Note that for First Differences the comparison is not
+between two values of the same variable but two values of
+the constitute variable and 0 for the two variables.
 }
 \examples{
 # Load Carpenter (2002) data
@@ -89,20 +90,22 @@ data("CarpenterFdaData")
 library(survival)
 
 # Run basic model
-M1 <- coxph(Surv(acttime, censor) ~ lethal*prevgenx, data = CarpenterFdaData)
+M1 <- coxph(Surv(acttime, censor) ~ lethal*prevgenx,
+            data = CarpenterFdaData)
 
-# Simulate Marginal Effect of lethal for multiple values of prevgenx
+# Simulate Marginal Effect of lethal for multiple
+# values of prevgenx
 Sim1 <- coxsimInteract(M1, b1 = "lethal", b2 = "prevgenx",
-						  X2 = seq(2, 115, by = 2), spin = TRUE)
+                       X2 = seq(2, 115, by = 2), spin = TRUE)
 
 ## dontrun
 # Change the order of the covariates to make a more easily
 # interpretable relative hazard graph.
 # M2 <- coxph(Surv(acttime, censor) ~ prevgenx*lethal +
-#             orphdum,
-#             data = CarpenterFdaData)
+#             orphdum, data = CarpenterFdaData)
 
-# Simulate Hazard Ratio of lethal for multiple values of prevgenx
+# Simulate Hazard Ratio of lethal for multiple
+# values of prevgenx
 # Sim2 <- coxsimInteract(M2, b1 = "prevgenx", b2 = "lethal",
 #                    X1 = seq(2, 115, by = 2),
 #                    X2 = c(0, 1),
@@ -120,21 +123,21 @@ Sim1 <- coxsimInteract(M1, b1 = "lethal", b2 = "prevgenx",
 #                       means = TRUE)
 }
 \references{
-  Brambor, Thomas, William Roberts Clark, and Matt Golder.
-  2006. ''Understanding Interaction Models: Improving
-  Empirical Analyses.'' Political Analysis 14(1): 63-82.
+Brambor, Thomas, William Roberts Clark, and Matt Golder.
+2006. ''Understanding Interaction Models: Improving
+Empirical Analyses.'' Political Analysis 14(1): 63-82.
 
-  King, Gary, Michael Tomz, and Jason Wittenberg. 2000.
-  ''Making the Most of Statistical Analyses: Improving
-  Interpretation and Presentation.'' American Journal of
-  Political Science 44(2): 347-61.
+King, Gary, Michael Tomz, and Jason Wittenberg. 2000.
+''Making the Most of Statistical Analyses: Improving
+Interpretation and Presentation.'' American Journal of
+Political Science 44(2): 347-61.
 
-  Liu, Ying, Andrew Gelman, and Tian Zheng. 2013.
-  ''Simulation-Efficient Shortest Probability Intervals.''
-  Arvix. \url{http://arxiv.org/pdf/1302.2142v1.pdf}.
+Liu, Ying, Andrew Gelman, and Tian Zheng. 2013.
+''Simulation-Efficient Shortest Probability Intervals.''
+Arvix. \url{http://arxiv.org/pdf/1302.2142v1.pdf}.
 }
 \seealso{
-  \code{\link{simGG}}, \code{\link{survival}},
-  \code{\link{strata}}, and \code{\link{coxph}},
+\code{\link{simGG}}, \code{\link{survival}},
+\code{\link{strata}}, and \code{\link{coxph}},
 }
 

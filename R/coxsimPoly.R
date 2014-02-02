@@ -12,10 +12,11 @@
 #' @param spin logical, whether or not to keep only the shortest probability interval rather than the middle simulations. Currently not supported for hazard rates.
 #'
 #' @return a \code{simpoly} class object.
-#' @details Simulates quantities of interest for polynomial covariate effects. For example if a nonlinear effect is modeled with a second order polynomial--i.e. \eqn{\beta_{1}x_{i} + \beta_{2}x_{i}^{2}}--we can once again draw \eqn{n} simulations from the multivariate normal distribution for both \eqn{\beta_{1}} and \eqn{\beta_{2}}. Then we simply calculate quantities of interest for a range of values and plot the results as before. For example, we find the first difference for a second order polynomial with:
-#' \deqn{\%\triangle h_{i}(t) = (\mathrm{e}^{\beta_{1}x_{j-1} + \beta_{2}x_{j-l}^{2}} - 1) * 100}
+#' @details Simulates quantities of interest for polynomial covariate effects. For example if a nonlinear effect is modeled with a second order polynomial--i.e. \eqn{\beta_{1}x_{i} + \beta_{2}x_{i}^{2}}{\beta[1]x[i] + \beta[2]x[i]^2}--we can once again draw \eqn{n} simulations from the multivariate normal distribution for both \eqn{\beta_{1}}{\beta[1]} and \eqn{\beta_{2}}{\beta[2]}. Then we simply calculate quantities of interest for a range of values and plot the results as before. For example, we find the first difference for a second order polynomial with:
+#' \deqn{\%\triangle h_{i}(t) = (\mathrm{e}^{\beta_{1}x_{j-1} + \beta_{2}x_{j-l}^{2}} - 1) * 100}{FD(h[i](t)) = exp(\beta[1]x[j-1] + \beta[2]x[j-l]^2) - 1) * 100}
 
-#' where \eqn{x_{j-l} = x_{j} - x_{l}}.
+
+#' where \eqn{x_{j-l} = x_{j} - x_{l}}{x[j-l] = x[j] - x[l]}.
 #'
 #' Note, you must use \code{\link{I}} to create the polynomials.
 #' 
@@ -27,18 +28,20 @@
 #' library(survival)
 #'
 #' # Run basic model
-#' M1 <- coxph(Surv(acttime, censor) ~ prevgenx + lethal + deathrt1 + acutediz +
-#' 				hosp01  + hhosleng + mandiz01 + femdiz01 + peddiz01 + orphdum + 
-#' 				natreg + I(natreg^2) + I(natreg^3) + vandavg3 + wpnoavg3 + 
-#'				condavg3 + orderent + stafcder, data = CarpenterFdaData)
+#' M1 <- coxph(Surv(acttime, censor) ~ prevgenx + lethal + deathrt1 + 
+#'             acutediz + hosp01  + hhosleng + mandiz01 + femdiz01 +
+#'             peddiz01 + orphdum + natreg + I(natreg^2) + 
+#'             I(natreg^3) + vandavg3 + wpnoavg3 + 
+#'             condavg3 + orderent + stafcder, data = CarpenterFdaData)
 #' 
 #' # Simulate simpoly First Difference
 #' Sim1 <- coxsimPoly(M1, b = "natreg", qi = "First Difference", 
-#'						pow = 3, Xj = seq(1, 150, by = 5), nsim = 100)
+#'                 pow = 3, Xj = seq(1, 150, by = 5), nsim = 100)
 #'
+#' ## dontrun
 #' # Simulate simpoly Hazard Ratio with spin probibility interval
 #' # Sim2 <- coxsimPoly(M1, b = "natreg", qi = "Hazard Ratio", 
-#' #						pow = 3, Xj = seq(1, 150, by = 5), spin = TRUE)
+#' #              pow = 3, Xj = seq(1, 150, by = 5), spin = TRUE)
 #' 
 #' @references Keele, Luke. 2010. ''Proportionally Difficult: Testing for Nonproportional Hazards in Cox Models.'' Political Analysis 18(2): 189-205.
 #'
@@ -50,14 +53,14 @@
 #'
 #' @seealso \code{\link{simGG}}, \code{\link{survival}}, \code{\link{strata}}, and \code{\link{coxph}}
 #' @importFrom reshape2 melt
-#' @importFrom MSBVAR rmultnorm
+#' @importFrom MASS mvrnorm
 #' @importFrom survival basehaz
 #' @importFrom plyr rename
 #' @export 
 
 coxsimPoly <- function(obj, b, qi = "Relative Hazard", pow = 2, Xj = NULL, Xl = NULL, nsim = 1000, ci = 0.95, spin = FALSE) 
 {
-  strata <- QI <- NULL
+  strata <- QI <- SimID <-  NULL
 	# Ensure that qi is valid
 	qiOpts <- c("Relative Hazard", "First Difference", "Hazard Rate", "Hazard Ratio")
 	TestqiOpts <- qi %in% qiOpts
@@ -76,12 +79,15 @@ coxsimPoly <- function(obj, b, qi = "Relative Hazard", pow = 2, Xj = NULL, Xl = 
   	Xjl <- Xbound[, 1] - Xbound[, 2]
 	}
 
+  # Create simulation ID variable
+  SimID <- 1:nsim
+
 	# Parameter estimates & Variance/Covariance matrix
 	Coef <- matrix(obj$coefficients)
 	VC <- vcov(obj)
 	  
 	# Draw covariate estimates from the multivariate normal distribution	   
-	Drawn <- rmultnorm(n = nsim, mu = Coef, vmat = VC)
+  Drawn <- mvrnorm(n = nsim, mu = Coef, Sigma = VC)
 	DrawnDF <- data.frame(Drawn)
 	dfn <- names(DrawnDF)
 
@@ -92,7 +98,7 @@ coxsimPoly <- function(obj, b, qi = "Relative Hazard", pow = 2, Xj = NULL, Xl = 
 		match(Temp, dfn)
   	}
 	pows <- as.numeric(2:pow)
-  	NamePow <- sapply(pows, NamesLoc, simplify = TRUE)
+  NamePow <- sapply(pows, NamesLoc, simplify = TRUE)
 
   NamePow <- c(bpos, NamePow)
   Drawn <- data.frame(Drawn[, NamePow])
@@ -112,7 +118,7 @@ coxsimPoly <- function(obj, b, qi = "Relative Hazard", pow = 2, Xj = NULL, Xl = 
   		TempComb <- mapply(Fitted, VN = VNames, x = i, p = powFull)
   		TempComb <- data.frame(TempComb)
   		TempComb$Xjl <- i
-  		TempComb$ID <- 1:nsim
+  		TempComb$SimID <- SimID
   		Simb <- rbind(Simb, TempComb)
   	}
 
@@ -140,9 +146,9 @@ coxsimPoly <- function(obj, b, qi = "Relative Hazard", pow = 2, Xj = NULL, Xl = 
         }
         Simb$QI <- Simb$hazard * Simb$HR 
         if (is.null(Simb$strata)){
-          Simb <- Simb[, list(time, Xjl, QI)]
+          Simb <- Simb[, list(SimID, time, Xjl, QI)]
         } else if (!is.null(Simb$strata)){
-          Simb <- Simb[, list(time, Xjl, QI, strata)]
+          Simb <- Simb[, list(SimID, time, Xjl, QI, strata)]
         }
         Simb <- data.frame(Simb)
   	}
@@ -152,7 +158,7 @@ coxsimPoly <- function(obj, b, qi = "Relative Hazard", pow = 2, Xj = NULL, Xl = 
 		SubVar <- "Xjl"
 	} else if (qi == "Hazard Rate"){
 		Simb <- rename(Simb, replace = c("Xjl" = "HRValue"))
-		SubVar <- c("time", "HRValue")
+		SubVar <- c("SimID", "time", "HRValue")
 	}
 
   SimbPerc <- IntervalConstrict(Simb = Simb, SubVar = SubVar, qi = qi,
@@ -161,15 +167,16 @@ coxsimPoly <- function(obj, b, qi = "Relative Hazard", pow = 2, Xj = NULL, Xl = 
 	# Clean up
   if (qi == "Hazard Rate"){
     if (is.null(SimbPerc$strata)){
-      SimbPercSub <- data.frame(SimbPerc$time, SimbPerc$QI, SimbPerc$HRValue)
-      names(SimbPercSub) <- c("Time", "HRate", "HRValue")
+      SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$time, 
+                                SimbPerc$QI, SimbPerc$HRValue)
+      names(SimbPercSub) <- c("SimID", "Time", "HRate", "HRValue")
     } else if (!is.null(SimbPerc$strata)) {
-    SimbPercSub <- data.frame(SimbPerc$time, SimbPerc$QI, SimbPerc$strata, SimbPerc$HRValue)
-    names(SimbPercSub) <- c("Time", "HRate", "Strata", "HRValue")
+    SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$time, SimbPerc$QI, SimbPerc$strata, SimbPerc$HRValue)
+    names(SimbPercSub) <- c("SimID", "Time", "HRate", "Strata", "HRValue")
     }
   } else if (qi == "Hazard Ratio" | qi == "Relative Hazard" | qi == "First Difference"){
-      SimbPercSub <- data.frame(SimbPerc$Xj, SimbPerc$QI)
-      names(SimbPercSub) <- c("Xj", "QI")
+      SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$Xj, SimbPerc$QI)
+      names(SimbPercSub) <- c("SimID", "Xj", "QI")
   }
 	class(SimbPercSub) <- c("simpoly", qi)
 	SimbPercSub

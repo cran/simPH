@@ -15,17 +15,17 @@
 #'
 #' @details Simulates relative hazards, first differences, hazard ratios, and hazard rates for penalized splines from Cox Proportional Hazards models. These can be plotted with \code{\link{simGG}}. 
 #' A Cox PH model with one penalized spline is given by:
-#'  \deqn{h(t|\mathbf{X}_{i})=h_{0}(t)\mathrm{e}^{g(x)}}
+#'  \deqn{h(t|\mathbf{X}_{i})=h_{0}(t)\mathrm{e}^{g(x)}}{h(t|X[i])=h[0](t)exp(g(x))}
 #'
 #' where \eqn{g(x)} is the penalized spline function. For our post-estimation purposes \eqn{g(x)} is basically a series of linearly combined coefficients such that:
 #'
-#'  \deqn{g(x) = \beta_{k_{1}}(x)_{1+} + \beta_{k_{2}}(x)_{2+} + \beta_{k_{3}}(x)_{3+} + \ldots + \beta_{k_{n}}(x)_{n+}}
+#'  \deqn{g(x) = \beta_{k_{1}}(x)_{1+} + \beta_{k_{2}}(x)_{2+} + \beta_{k_{3}}(x)_{3+} + \ldots + \beta_{k_{n}}(x)_{n+}}{g(x) = \beta[k][1](x)[1+] + \beta[k][2](x)[2+] + \beta[k][3](x)[3+] + \ldots + \beta[k][n](x)[n+]}
 #'
 #' where \eqn{k} are the equally spaced spline knots with values inside of the range of observed \eqn{x} and \eqn{n} is the number of knots. 
 #'
-#' We can again draw values of each \eqn{\beta_{k_{1}}, \ldots \beta_{k_{n}}} from the multivariate normal distribution described above. We then use these simulated coefficients to estimates quantities of interest for a range covariate values. For example, the first difference between two values \eqn{x_{j}} and \eqn{x_{l}} is:
+#' We can again draw values of each \eqn{\beta_{k_{1}},\: \ldots \beta_{k_{n}}}{\beta[k][1], \ldots \beta[k[n]} from the multivariate normal distribution described above. We then use these simulated coefficients to estimates quantities of interest for a range covariate values. For example, the first difference between two values \eqn{x_{j}}{x[j]} and \eqn{x_{l}}{x[l]} is:
 #'
-#'    \deqn{\%\triangle h_{i}(t) = (\mathrm{e}^{g(x_{j}) - g(x_{l})} - 1) * 100}
+#'    \deqn{\%\triangle h_{i}(t) = (\mathrm{e}^{g(x_{j}) - g(x_{l})} - 1) * 100}{FD(h[i](t)) = (exp(g(x[j]) - g(x[l])) - 1) * 100}
 #'
 #' Relative hazards and hazard ratios can be calculated by extension.
 #'
@@ -42,11 +42,11 @@
 #' # Run basic model
 #' # From Keele (2010) replication data
 #' # M1 <- coxph(Surv(acttime, censor) ~  prevgenx + lethal + deathrt1 + 
-#' #				acutediz + hosp01  + pspline(hospdisc, df = 4) + 
-#' #				pspline(hhosleng, df = 4) + mandiz01 + femdiz01 + peddiz01 +
-#' #				orphdum + natreg + vandavg3 + wpnoavg3 + 
-#' #				pspline(condavg3, df = 4) + pspline(orderent, df = 4) + 
-#'#				pspline(stafcder, df = 4), data = CarpenterFdaData)
+#' #           acutediz + hosp01  + pspline(hospdisc, df = 4) + 
+#' #           pspline(hhosleng, df = 4) + mandiz01 + femdiz01 + peddiz01 +
+#' #           orphdum + natreg + vandavg3 + wpnoavg3 + 
+#' #           pspline(condavg3, df = 4) + pspline(orderent, df = 4) + 
+#' #           pspline(stafcder, df = 4), data = CarpenterFdaData)
 #'
 #' # Simulate Relative Hazards for orderent
 #' # Sim1 <- coxsimSpline(M1, bspline = "pspline(stafcder, df = 4)", 
@@ -55,13 +55,11 @@
 #' #                    Xj = seq(1100, 1700, by = 10), 
 #' #                    Xl = seq(1099, 1699, by = 10), spin = TRUE)
 #'
-#' ## dontrun  
 #' # Simulate Hazard Rates for orderent
 #' # Sim2 <- coxsimSpline(M1, bspline = "pspline(orderent, df = 4)",
 #' #                       bdata = CarpenterFdaData$orderent,
 #' #                       qi = "Hazard Rate",
-#' #                       Xj = seq(2, 53, by = 3),
-#' #                       nsim = 100)
+#' #                       Xj = seq(2, 53, by = 3), nsim = 100)
 #'
 #'
 #' @seealso \code{\link{simGG}}, \code{\link{survival}}, \code{\link{strata}}, and \code{\link{coxph}}
@@ -76,7 +74,7 @@
 #' @importFrom stringr word str_match str_replace
 #' @importFrom reshape2 melt
 #' @importFrom survival basehaz
-#' @importFrom MSBVAR rmultnorm
+#' @importFrom MASS mvrnorm
 #' @export
 
 coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl = 0, nsim = 1000, ci = 0.95, spin = FALSE)
@@ -117,19 +115,22 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 	}
 
 	# Extract boundary knots for default Boundary.knots = range(x) & number of knots
-	#### Note: these can also be found with get("cbase", environment(obj$printfun[[1]])) # (replace 1 with the spline term number
+	#### Note: these can also be found with get("cbase", environment(obj$printfun[[1]])) # (replace 1 with the spline term number)
 	#### From: http://r.789695.n4.nabble.com/help-on-pspline-in-coxph-td3431829.html 
 	OA <- obj$assign
 	ListKnots <- OA[bterm]
 	NumKnots <- length(unlist(ListKnots))
 	KnotIntervals <- levels(cut(bdata, breaks = NumKnots))
+    
+    # Create simulation ID variable
+    SimID <- 1:nsim
 
 	# Parameter estimates & Variance/Covariance matrix
 	Coef <- matrix(obj$coefficients)
 	VC <- vcov(obj)
 
 	# Draw covariate estimates from the multivariate normal distribution	   
-	Drawn <- rmultnorm(n = nsim, mu = Coef, vmat = VC)
+	Drawn <- mvrnorm(n = nsim, mu = Coef, Sigma = VC)
 	DrawnDF <- data.frame(Drawn)
 	dfn <- names(DrawnDF)
 
@@ -165,8 +166,10 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 	names(CoefIntervals) <- c("CoefName", "IntervalStart", "IntervalFinish")
 
 	# Melt Drawn DF to long format
-	TempDF <- suppressMessages(data.frame(melt(DrawnDF)))
-	names(TempDF) <- c("CoefName", "Coef")
+    DrawnDF <- data.frame(SimID, DrawnDF)
+	TempDF <- suppressMessages(data.frame(melt(DrawnDF, 
+		                       id.vars = 'SimID')))
+	names(TempDF) <- c("SimID", "CoefName", "Coef")
 
 	# Merge with CoefIntervals
 	CoefIntervalsDT <- data.table(CoefIntervals, key = "CoefName")
@@ -180,7 +183,7 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 		CombinedDF <- data.frame()
 		for (i in f){
 		  Temps <- TempDF
-		  Temps$X <- ifelse(TempDF[, 3] < i & i <= TempDF[, 4], i, NA)
+		  Temps$X <- ifelse(TempDF[, 'IntervalStart'] < i & i <= TempDF[, 'IntervalFinish'], i, NA)
 		  Temps <- subset(Temps, !is.na(X))
 		  CombinedDF <- rbind(CombinedDF, Temps)
 		}
@@ -192,18 +195,20 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 	  	if (length(Xj) != length(Xl)){
 	      stop("Xj and Xl must be the same length.")
 	    } 
-		Simbj <- MergeX(Xj)
-	    names(Simbj) <- c("CoefName", "Coef", "IntervalStart", "IntervalFinish", "Xj")
-		Simbl <- MergeX(Xl)
-	    names(Simbl) <- c("CoefName", "Coef", "IntervalStart", "IntervalFinish", "Xl")
-	 	Xs <- data.frame(Xj, Xl)   	
+      Simbj <- MergeX(Xj)
+      names(Simbj) <- c("CoefName", "SimID", "Coef", "IntervalStart", 
+                        "IntervalFinish", "Xj")
+		  Simbl <- MergeX(Xl)
+	    names(Simbl) <- c("CoefName", 'SimID', "Coef", "IntervalStart", 
+                        "IntervalFinish", "Xl")
+	 	  Xs <- data.frame(Xj, Xl)   	
 	    Simbj <- merge(Simbj, Xs, by = "Xj")
 	    Simbj$Comparison <- paste(Simbj$Xj, "vs.", Simbj$Xl)
 	    Simbj$QI <- exp((Simbj$Xj * Simbj$Coef) - (Simbl$Xl * Simbl$Coef))
 	    Simb <- Simbj
 	} else if (qi == "Relative Hazard"){
 		Simb <- MergeX(Xj)
-	    names(Simb) <- c("CoefName", "Coef", "IntervalStart", "IntervalFinish", "Xj")
+	    names(Simb) <- c("CoefName", "SimID", "Coef", "IntervalStart", "IntervalFinish", "Xj")
 	    Simb$QI <- exp(Simb$Xj * Simb$Coef)
 	}
 	else if (qi == "First Difference"){
@@ -212,9 +217,9 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 	    } 
 	    else {
 			Simbj <- MergeX(Xj)
-		    names(Simbj) <- c("CoefName", "Coef", "IntervalStart", "IntervalFinish", "Xj")
+		    names(Simbj) <- c("CoefName", "SimID",  "Coef", "IntervalStart", "IntervalFinish", "Xj")
 			Simbl <- MergeX(Xl)
-		    names(Simbl) <- c("CoefName", "Coef", "IntervalStart", "IntervalFinish", "Xl")
+		    names(Simbl) <- c("CoefName", "SimID", "Coef", "IntervalStart", "IntervalFinish", "Xl")
 		 	
 		 	Xs <- data.frame(Xj, Xl)   	
 		    Simbj <- merge(Simbj, Xs, by = "Xj")
@@ -228,7 +233,7 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 		Xl <- NULL
       message("Xl is ignored. All variables' values other than b fitted at 0.") 
 		Simb <- MergeX(Xj)
-	    names(Simb) <- c("CoefName", "Coef", "IntervalStart", "IntervalFinish", "Xj")
+	    names(Simb) <- c("CoefName", "SimID", "Coef", "IntervalStart", "IntervalFinish", "Xj")
 	 	Simb$HR <- exp(Simb$Xj * Simb$Coef)
 	  	bfit <- basehaz(obj)
 	  	## Currently does not support strata
@@ -247,9 +252,9 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
       }
       Simb$QI <- Simb$hazard * Simb$HR 
       if (is.null(Simb$strata)){
-        Simb <- Simb[, list(time, Xj, QI)]
+        Simb <- Simb[, list(time, SimID, Xj, QI)]
       } else if (!is.null(Simb$strata)){
-        Simb <- Simb[, list(time, Xj, QI, strata)]
+        Simb <- Simb[, list(time, SimID, Xj, QI, strata)]
       }
       Simb <- data.frame(Simb)
 	}
@@ -261,29 +266,32 @@ coxsimSpline <- function(obj, bspline, bdata, qi = "Relative Hazard", Xj = 1, Xl
 		SubVar <- c("time", "Xj")
 	}
 
-  SimbPerc <- IntervalConstrict(Simb = Simb, SubVar = SubVar, qi = qi,
-          QI = QI, spin = spin, ci = ci)	
+  SimbPerc <- IntervalConstrict(Simb = Simb, SubVar = SubVar,
+				qi = qi, QI = QI, spin = spin, ci = ci)	
 
   # Final clean up
     # Subset simspline object & create a data frame of important variables
 	if (qi == "Hazard Rate"){
 		if (is.null(SimbPerc$strata)){
-			SimbPercSub <- data.frame(SimbPerc$time, SimbPerc$QI, SimbPerc$Xj)
-			names(SimbPercSub) <- c("Time", "QI", "Xj")
+			SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$time, SimbPerc$QI, 
+				SimbPerc$Xj)
+			names(SimbPercSub) <- c("SimID", "Time", "QI", "Xj")
 		} 
 		# Currently does not support strata
 		else if (!is.null(SimbPerc$strata)) {
 			stop("coxsimSpline currently doesn''t support Hazard Rates when there are multiple stata. Sorry.")
 		}
 	} else if (qi == "Hazard Ratio"){
-	  	SimbPercSub <- data.frame(SimbPerc$Xj, SimbPerc$QI, SimbPerc$Comparison)
-	  	names(SimbPercSub) <- c("Xj", "QI", "Comparison")
+	  	SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$Xj, SimbPerc$QI, 
+                                SimbPerc$Comparison)
+	  	names(SimbPercSub) <- c("SimID", "Xj", "QI", "Comparison")
 	} else if (qi == "Relative Hazard"){
-	  	SimbPercSub <- data.frame(SimbPerc$Xj, SimbPerc$QI)
-	  	names(SimbPercSub) <- c("Xj", "QI")
+	  	SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$Xj, SimbPerc$QI)
+	  	names(SimbPercSub) <- c("SimID", "Xj", "QI")
 	} else if (qi == "First Difference"){
-		SimbPercSub <- data.frame(SimbPerc$Xj, SimbPerc$QI, SimbPerc$Comparison)
-		names(SimbPercSub) <- c("Xj", "QI", "Comparison")
+		SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$Xj, SimbPerc$QI, 
+			SimbPerc$Comparison)
+		names(SimbPercSub) <- c("SimID", "Xj", "QI", "Comparison")
 	}
   class(SimbPercSub) <- c("simspline", qi)
   SimbPercSub
