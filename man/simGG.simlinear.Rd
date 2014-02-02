@@ -1,13 +1,11 @@
 \name{simGG.simlinear}
 \alias{simGG.simlinear}
-\title{Plot simulated linear time-constant quantities of interest from Cox Proportional Hazards Models}
+\title{Plot simulated linear, non-time interacted quantities of interest from Cox Proportional Hazards Models}
 \usage{
-  \method{simGG}{simlinear} (obj, from = NULL, to = NULL,
-    xlab = NULL, ylab = NULL, title = NULL,
-    smoother = "auto", spalette = "Set1",
-    legend = "legend", leg.name = "", lcolour = "#2B8CBE",
-    lsize = 1, pcolour = "#A6CEE3", psize = 1, alpha = 0.1,
-    ribbons = FALSE, ...)
+\method{simGG}{simlinear}(obj, from = NULL, to = NULL, xlab = NULL,
+  ylab = NULL, title = NULL, smoother = "auto", spalette = "Set1",
+  legend = "legend", leg.name = "", lcolour = "#2B8CBE", lsize = 1,
+  pcolour = "#A6CEE3", psize = 1, alpha = 0.2, type = "points", ...)
 }
 \arguments{
   \item{obj}{a \code{simlinear} class object.}
@@ -26,7 +24,7 @@
   \item{title}{the plot's main title.}
 
   \item{smoother}{what type of smoothing line to use to
-  summarize the plotted coefficient.}
+  summarize the center of the simulation distribution.}
 
   \item{spalette}{colour palette for when there are
   multiple sets of comparisons to plot. Default palette is
@@ -55,17 +53,26 @@
   \item{psize}{size of the plotted simulation points.
   Default is \code{psize = 1}. See \code{\link{ggplot2}}.}
 
-  \item{alpha}{point alpha (e.g. transparency) for the
-  points or ribbons. Default is \code{alpha = 0.1}. See
-  \code{\link{ggplot2}}.}
+  \item{alpha}{numeric. Alpha (e.g. transparency) for the
+  points, lines, or ribbons. Default is \code{alpha = 0.2}.
+  See \code{\link{ggplot2}}. Note, if \code{type = "lines"}
+  or \code{type = "points"} then \code{alpah} sets the
+  maximum value per line or point at the center of the
+  distribution. Lines or points further from the center are
+  more transparent the further they get from the middle.}
 
-  \item{ribbons}{logical specifies whether or not to use
-  summary ribbons of the simulations rather than plotting
-  every simulation value as a point. If \code{ribbons =
-  TRUE} a plot will be created with shaded areas
-  ('ribbons') for the minimum and maximum simulation values
-  (i.e. the middle interval set with \code{qi} in
-  \code{\link{coxsimLinear}}) as well as the central 50
+  \item{type}{character string. Specifies how to plot the
+  simulations. Can be \code{points}, \code{lines}, or
+  \code{ribbons}. If points then each simulation value will
+  be plotted. If \code{lines} is chosen then each
+  simulation is plotted using a different line. Note: any
+  simulation with a value along its length that is outside
+  of the specified central interval will be dropped. This
+  is to create a smooth plot. If \code{type = "ribbons"} a
+  plot will be created with shaded areas ('ribbons') for
+  the minimum and maximum simulation values (i.e. the
+  middle interval set with \code{qi} in
+  \code{\link{coxsimSpline}}) as well as the central 50
   percent of this area. It also plots a line for the median
   value of the full area, so values in \code{smoother} are
   ignored. One of the key advantages of using ribbons
@@ -75,64 +82,67 @@
   \item{...}{Additional arguments. (Currently ignored.)}
 }
 \value{
-  a \code{gg} \code{ggplot} class object
+a \code{gg} \code{ggplot} class object
 }
 \description{
-  \code{simGG.simlinear} uses \link{ggplot2} to plot the
-  quantities of interest from \code{simlinear} objects,
-  including relative hazards, first differences, hazard
-  ratios, and hazard rates.
+\code{simGG.simlinear} uses \link{ggplot2} to plot the
+quantities of interest from \code{simlinear} objects,
+including relative hazards, first differences, hazard
+ratios, and hazard rates.
 }
 \details{
-  Uses \link{ggplot2} to plot the quantities of interest
-  from \code{simlinear} objects, including relative
-  hazards, first differences, hazard ratios, and hazard
-  rates. If there are multiple strata, the quantities of
-  interest will be plotted in a grid by strata. Note: A
-  dotted line is created at y = 1 (0 for first difference),
-  i.e. no effect, for time-varying hazard ratio graphs. No
-  line is created for hazard rates.
+Uses \link{ggplot2} to plot the quantities of interest from
+\code{simlinear} objects, including relative hazards, first
+differences, hazard ratios, and hazard rates. If there are
+multiple strata, the quantities of interest will be plotted
+in a grid by strata. Note: A dotted line is created at y =
+1 (0 for first difference), i.e. no effect, for
+time-varying hazard ratio graphs. No line is created for
+hazard rates.
 }
 \examples{
-## dontrun
 # Load survival package
-# library(survival)
+library(survival)
 # Load Carpenter (2002) data
-# data("CarpenterFdaData")
+data("CarpenterFdaData")
 
-# Estimate survival model
-# M1 <- coxph(Surv(acttime, censor) ~ prevgenx + lethal +
-#            deathrt1 + acutediz + hosp01  + hhosleng +
-#            mandiz01 + femdiz01 + peddiz01 + orphdum +
-#            vandavg3 + wpnoavg3 + condavg3 + orderent +
-#            stafcder, data = CarpenterFdaData)
+# Estimate basic model
+M1 <- coxph(Surv(acttime, censor) ~ prevgenx + lethal +
+            deathrt1 + acutediz + hosp01  + hhosleng +
+            mandiz01 + femdiz01 + peddiz01 + orphdum +
+            vandavg3 + wpnoavg3 + condavg3 + orderent +
+            stafcder, data = CarpenterFdaData)
 
 # Simulate and plot Hazard Ratios for stafcder variable
-# Sim1 <- coxsimLinear(M1, b = "stafcder",
-#						qi = "Hazard Ratio",
-#						Xj = seq(1237, 1600, by = 2), spin = TRUE)
+Sim1 <- coxsimLinear(M1, b = "stafcder",
+                     Xj = c(1237, 1600),
+                     Xl = c(1000, 1000),
+                     qi = "Hazard Ratio",
+                     spin = TRUE, ci = 0.99)
 # simGG(Sim1)
 
+## dontrun
 # Simulate and plot Hazard Rate for stafcder variable
 # Sim2 <- coxsimLinear(M1, b = "stafcder", nsim = 100,
-#						qi = "Hazard Rate", Xj = c(1237, 1600))
-# simGG(Sim2, ribbons = TRUE)
+#                      qi = "Hazard Rate",
+#                      Xj = c(1237, 1600))
+# simGG(Sim2, type = 'lines')
 }
 \references{
-  Licht, Amanda A. 2011. ''Change Comes with Time:
-  Substantive Interpretation of Nonproportional Hazards in
-  Event History Analysis.'' Political Analysis 19: 227-43.
+Licht, Amanda A. 2011. ''Change Comes with Time:
+Substantive Interpretation of Nonproportional Hazards in
+Event History Analysis.'' Political Analysis 19: 227-43.
 
-  Keele, Luke. 2010. ''Proportionally Difficult: Testing
-  for Nonproportional Hazards in Cox Models.'' Political
-  Analysis 18(2): 189-205.
+Keele, Luke. 2010. ''Proportionally Difficult: Testing for
+Nonproportional Hazards in Cox Models.'' Political Analysis
+18(2): 189-205.
 
-  Carpenter, Daniel P. 2002. ''Groups, the Media, Agency
-  Waiting Costs, and FDA Drug Approval.'' American Journal
-  of Political Science 46(3): 490-505.
+Carpenter, Daniel P. 2002. ''Groups, the Media, Agency
+Waiting Costs, and FDA Drug Approval.'' American Journal of
+Political Science 46(3): 490-505.
 }
 \seealso{
-  \code{\link{coxsimLinear}}, \code{\link{simGG.simtvc}},
-  and \code{\link{ggplot2}}
+\code{\link{coxsimLinear}}, \code{\link{simGG.simtvc}}, and
+\code{\link{ggplot2}}
 }
 
