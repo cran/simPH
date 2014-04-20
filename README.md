@@ -1,17 +1,23 @@
 simPH
 ======
 
+<img src="img/plotbanner.png" height="40" width="1000"></img>
+
 ### Christopher Gandrud
 
-### Version 1.1
+### Version 1.2 [![Build Status](https://travis-ci.org/christophergandrud/simPH.png)](https://travis-ci.org/christophergandrud/simPH)
 
-### Please report any bugs at <https://github.com/christophergandrud/simPH/issues>.
+#### Please report any bugs to:
+
+<https://github.com/christophergandrud/simPH/issues>
 
 ---
 
-An R package for simulating and plotting quantities of interest (relative hazards, first differences, and hazard ratios) for linear coefficients, multiplicative interactions, polynomials, penalised splines, and non-proportional hazards, as well as stratified survival curves from Cox Proportional Hazard models.
+**simPH** is an R package for simulating and plotting quantities of interest (relative hazards, first differences, and hazard ratios) for linear coefficients, multiplicative interactions, polynomials, penalised splines, and non-proportional hazards, as well as stratified survival curves from Cox Proportional Hazard models.
 
 For more information plus examples, please see this [working paper](http://ssrn.com/abstract=2318977).
+
+## Functions
 
 The package includes the following functions:
 
@@ -41,14 +47,9 @@ Results from these functions can be plotted using the `simGG` method. The syntax
 
 - `simGG.siminteract`: uses **ggplot2** to graph linear multiplicative interactions.
 
-**Important Change:** From **simPH** version 0.05 you can now use the method `simGG` for plotting all simulations rather than the old sim model object specific commands. In practical terms this means that you can now just use the command `simGG` rather than the old gg. . . commands. The old commands are deprecated and will no longer work.
-
 ##### Additional styling
 
-Because in almost all cases `simGG` returns a *ggplot2* object, you can add additional aesthetic attributes in the normal *ggplot2* way. See the [ggplot2 documentation for more details](http://docs.ggplot2.org/current/). Here is a quick example:
-
-
----
+Because in almost all cases `simGG` returns a *ggplot2* object, you can add additional aesthetic attributes in the normal *ggplot2* way. See the [ggplot2 documentation for more details](http://docs.ggplot2.org/current/).
 
 #### Misc.
 
@@ -56,23 +57,23 @@ Because in almost all cases `simGG` returns a *ggplot2* object, you can add addi
 
 - `tvc`: a function for creating time interactions. Currently supports `'linear'`, natural `'log'`, and exponentiation (`'power'`).
 
-- `ggfitStrata`: a function to plot fitted stratified survival curves estimated from `survfit` using **ggplot2**. This function builds on the **survival** package's `plot.survfit` command. One major advantage is the ability to split the survival curves into multiple plots and arrange them in a grid. This makes it easier to examine many strata at once. Otherwise they can be very bunched up.
+- `setXl`: a function for setting valid `Xl` values given a sequence of fitted `Xj` values. This makes it more intituitive to find hazard ratios and first differences for comparisons between some Xj fitted values and Xl values other than 0.
+
+- `ggfitStrata`: a function to plot fitted stratified survival curves estimated from `survfit` using **ggplot2**. This function builds on the **survival** package's `plot.survfit` function. One major advantage is the ability to split the survival curves into multiple plots and arrange them in a grid. This makes it easier to examine many strata at once. Otherwise they can be very bunched up.
 
 ## Installation
 
 The package is available on CRAN and can be installed in the normal R way.
 
-To install the development version use the [devtools](https://github.com/hadley/devtools) command `install_github`. Here is the code for installing the most recent development version:
+To install the development version use the [devtools](https://github.com/hadley/devtools) function `install_github`. Here is the code for installing the most recent development version:
 
-```r
-devtools::install_github("simPH", "christophergandrud")
+```{S}
+devtools::install_github('christophergandrud/simPH')
 ```
 
 ## Tip
 
-Before running the simulation and graph commands in this package carefully consider how many simulations you are about to make. Especially for hazard rates over long periods of time and with multiple strata, you can be asking **simPH** to run very many simulations. This will be computationally intensive. 
-
----
+Before running the simulation and graph functions in this package carefully consider how many simulations you are about to make. Especially for hazard rates over long periods of time and with multiple strata, you can be asking **simPH** to run very many simulations. This will be computationally intensive. e
 
 ## Sources
 
@@ -94,9 +95,9 @@ Box-Steffensmeier, Janet M, and Suzanna De Boef. 2006. [“Repeated Events Survi
 
 To learn more about shortest probability intervals (and also for the source of the code that made this possible in **simPH**) see:
 
-Liu, Y., Gelman, A., & Zheng, T. (2013). ["Simulation-efficient Shortest Probablility Intervals."](http://arxiv.org/pdf/1302.2142v1.pdf) Arvix. 
+Liu, Y., Gelman, A., & Zheng, T. (2013). ["Simulation-efficient Shortest Probablility Intervals."](http://arxiv.org/pdf/1302.2142v1.pdf) Arvix.
 
-**Also good:** Hyndman, R. J. (1996). ["Computing and Graphing Highest Density Regions."](http://www.jstor.org/stable/10.2307/2684423) The American Statistician, 50(2), 120–126.
+**Also good:** Hyndman, R. J. (1996). ["Computing and Graphing Highest Density Regions."](http://www.jstor.org/stable/10.2307/2684423) The American Statistician, 50(2): 120–126.
 
 ### Interpreting Interactions
 
@@ -106,14 +107,18 @@ Brambor, Thomas, William Roberts Clark, and Matt Golder. 2006. [“Understanding
 
 ### The Olden Days
 
-For an example of how non-proportional hazard results were often presented before **simPH** see (some of the problems I encountered in this paper were a major part of why I'm developing this package): 
+For an example of how non-proportional hazard results were often presented before **simPH** see (some of the problems I encountered in this paper were a major part of why I'm developing this package):
 
-Gandrud, Christopher. 2013. [“The Diffusion of Financial Supervisory Governance Ideas.”](http://www.tandfonline.com/doi/full/10.1080/09692290.2012.727362) Review of International Political Economy. 20(4):881-916.
-
----
+Gandrud, Christopher. 2013. [“The Diffusion of Financial Supervisory Governance Ideas.”](http://www.tandfonline.com/doi/full/10.1080/09692290.2012.727362) Review of International Political Economy. 20(4): 881-916.
 
 ## Future Plans
 
-I intend to expand the quantities of interest that can be simulated and graphed for Cox PH models. I am also currently working on functions that can simulate and graph hazard ratios estimated from [Fine and Gray competing risks models](http://www.jstor.org/stable/2670170). 
+I intend to expand the quantities of interest that can be simulated and graphed for Cox PH models. I am also currently working on functions that can simulate and graph hazard ratios estimated from [Fine and Gray competing risks models](http://www.jstor.org/stable/2670170).
 
-I am also working on a way to graph hazard ratios with frailties. 
+I am also working on a way to graph hazard ratios with frailties.
+
+---
+
+[<img src="http://media.tumblr.com/023c285c14ef01953d3b67ffe789004d/tumblr_inline_mor1uu2OOZ1qz4rgp.png" height = "100" align="right" />](http://nadrosia.tumblr.com/post/53520500877/made-in-berlin-badge-update)
+
+Licensed under [GPL-3](https://github.com/christophergandrud/simPH/blob/master/LICENSE.md)

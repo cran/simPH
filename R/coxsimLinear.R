@@ -1,19 +1,46 @@
-#' Simulate quantities of interest for linear covariates that are not interacted with time from Cox Proportional Hazards models
+#' Simulate quantities of interest for covariates from Cox Proportional Hazards 
+#' models that are not interacted with time or nonlinearly transformed
 #'
-#' \code{coxsimLinear} simulates relative hazards, first differences, and hazard ratios for linear covariates that are not interacted with time from models estimated with \code{\link{coxph}} using the multivariate normal distribution. These can be plotted with \code{\link{simGG}}.
+#' \code{coxsimLinear} simulates relative hazards, first differences, and 
+#' hazard ratios for linear covariates that are not interacted with time or 
+#' nonlinearly transformed from models estimated with \code{\link{coxph}} using 
+#' the multivariate normal distribution. These can be plotted with 
+#' \code{\link{simGG}}.
 #' @param obj a \code{\link{coxph}} class fitted model object.
 #' @param b character string name of the coefficient you would like to simulate.
-#' @param qi quantity of interest to simulate. Values can be \code{"Relative Hazard"}, \code{"First Difference"}, \code{"Hazard Ratio"}, and \code{"Hazard Rate"}. The default is \code{qi = "Relative Hazard"}. If \code{qi = "Hazard Rate"} and the \code{coxph} model has strata, then hazard rates for each strata will also be calculated.
+#' @param qi quantity of interest to simulate. Values can be 
+#' \code{"Relative Hazard"}, \code{"First Difference"}, \code{"Hazard Ratio"}, 
+#' and \code{"Hazard Rate"}. The default is \code{qi = "Relative Hazard"}. If 
+#' \code{qi = "Hazard Rate"} and the \code{coxph} model has strata, then hazard 
+#' rates for each strata will also be calculated.
 #' @param Xj numeric vector of fitted values for \code{b} to simulate for.
-#' @param Xl numeric vector of values to compare \code{Xj} to. Note if \code{code = "Relative Hazard"} only \code{Xj} is relevant.
-#' @param means logical, whether or not to use the mean values to fit the hazard rate for covaraiates other than \code{b}. Note: EXPERIMENTAL. \code{lines} are not currently supported in \code{\link{simGG}} if \code{means = TRUE}.
-#' @param nsim the number of simulations to run per value of X. Default is \code{nsim = 1000}. Note: it does not currently support models that include polynomials created by \code{\link{I}}.
-#' @param ci the proportion of simulations to keep. The default is \code{ci = 0.95}, i.e. keep the middle 95 percent. If \code{spin = TRUE} then \code{ci} is the confidence level of the shortest probability interval. Any value from 0 through 1 may be used.
-#' @param spin logical, whether or not to keep only the shortest probability interval rather than the middle simulations. Currently not supported for Hazard Rates.
+#' @param Xl numeric vector of values to compare \code{Xj} to. Note if 
+#' \code{code = "Relative Hazard"} only \code{Xj} is relevant.
+#' @param means logical, whether or not to use the mean values to fit the 
+#' hazard rate for covaraiates other than \code{b}. Note: EXPERIMENTAL. 
+#' \code{lines} are not currently supported in \code{\link{simGG}} if 
+#' \code{means = TRUE}.
+#' @param nsim the number of simulations to run per value of X. Default is 
+#' \code{nsim = 1000}. Note: it does not currently support models that include 
+#' polynomials created by \code{\link{I}}.
+#' @param ci the proportion of simulations to keep. The default is 
+#' \code{ci = 0.95}, i.e. keep the middle 95 percent. If \code{spin = TRUE} 
+#' then \code{ci} is the confidence level of the shortest probability interval. 
+#' Any value from 0 through 1 may be used.
+#' @param spin logical, whether or not to keep only the shortest probability 
+#' interval rather than the middle simulations. Currently not supported for 
+#' Hazard Rates.
+#' @param extremesDrop logical whether or not to drop simulated quantity of 
+#' interest values that are \code{Inf}, \code{NA}, \code{NaN} and 
+#' \eqn{> 1000000} for \code{spin = FALSE} or \eqn{> 800} for \code{spin = TRUE}. 
+#' These values are difficult to plot \code{\link{simGG}} and may prevent 
+#' \code{spin} from finding the central interval.
 #'
 #' @return a \code{simlinear} object
 #'
-#' @description Simulates relative hazards, first differences, hazard ratios, and hazard rates for linear, non-time interacted covariates from Cox Proportional Hazard models. These can be plotted with \code{\link{simGG}}.
+#' @description Simulates relative hazards, first differences, hazard ratios, 
+#' and hazard rates for linear, non-time interacted covariates from Cox 
+#' Proportional Hazard models. These can be plotted with \code{\link{simGG}}.
 #'
 #'
 #' @examples
@@ -44,13 +71,20 @@
 #'                       ci = 0.99)
 #' }
 #'
-#' @seealso \code{\link{simGG}}, \code{\link{survival}}, \code{\link{strata}}, and \code{\link{coxph}}
+#' @seealso \code{\link{simGG}}, \code{\link{survival}}, \code{\link{strata}}, 
+#' and \code{\link{coxph}}
 #'
-#' @references Licht, Amanda A. 2011. ''Change Comes with Time: Substantive Interpretation of Nonproportional Hazards in Event History Analysis.'' Political Analysis 19: 227-43.
+#' @references Licht, Amanda A. 2011. ''Change Comes with Time: Substantive 
+#' Interpretation of Nonproportional Hazards in Event History Analysis.'' 
+#' Political Analysis 19: 227-43.
 #'
-#' King, Gary, Michael Tomz, and Jason Wittenberg. 2000. ''Making the Most of Statistical Analyses: Improving Interpretation and Presentation.'' American Journal of Political Science 44(2): 347-61.
+#' King, Gary, Michael Tomz, and Jason Wittenberg. 2000. ''Making the Most of 
+#' Statistical Analyses: Improving Interpretation and Presentation.'' American 
+#' Journal of Political Science 44(2): 347-61.
 #' 
-#' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient Shortest Probability Intervals.'' Arvix. \url{http://arxiv.org/pdf/1302.2142v1.pdf}.
+#' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient 
+#' Shortest Probability Intervals.'' Arvix. 
+#' \url{http://arxiv.org/pdf/1302.2142v1.pdf}.
 #'
 #' @import data.table
 #' @importFrom reshape2 melt
@@ -58,11 +92,13 @@
 #' @importFrom MASS mvrnorm
 #' @export
 
-coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, means = FALSE, nsim = 1000, ci = 0.95, spin = FALSE)
+coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, 
+                        means = FALSE, nsim = 1000, ci = 0.95, spin = FALSE,
+                        extremesDrop = TRUE)
 {	
   HRValue <- strata <- QI <- SimID <- NULL
   if (qi != "Hazard Rate" & isTRUE(means)){
-    stop("means can only be TRUE when qi = 'Hazard Rate'.")
+    stop("means can only be TRUE when qi = 'Hazard Rate'.", call. = FALSE)
   }
 
   if (is.null(Xl) & qi != "Hazard Rate"){
@@ -73,10 +109,12 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
   }
 
   # Ensure that qi is valid
-  qiOpts <- c("Relative Hazard", "First Difference", "Hazard Rate", "Hazard Ratio")
+  qiOpts <- c("Relative Hazard", "First Difference", "Hazard Rate", 
+              "Hazard Ratio")
   TestqiOpts <- qi %in% qiOpts
   if (!isTRUE(TestqiOpts)){
-    stop("Invalid qi type. qi must be 'Relative Hazard', 'Hazard Rate', 'First Difference', or 'Hazard Ratio'")
+    stop("Invalid qi type. qi must be 'Relative Hazard', 'Hazard Rate', 
+         'First Difference', or 'Hazard Ratio'.", call. = FALSE)
   }
   MeansMessage <- NULL
   if (isTRUE(means) & length(obj$coefficients) == 3){
@@ -115,7 +153,7 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
       Simb$QI <- exp(Simb$Xj * Simb$Coef) 
     } else if (qi == "First Difference"){
       if (length(Xj) != length(Xl)){
-        stop("Xj and Xl must be the same length.")
+        stop("Xj and Xl must be the same length.", call. = FALSE)
       } 
       else {
   	    Xs <- data.frame(Xj, Xl)
@@ -160,7 +198,8 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
     }
   }
 
-  # If the user wants to calculate Hazard Rates using means for fitting all covariates other than b.
+  # If the user wants to calculate Hazard Rates using means for fitting 
+  # all covariates other than b.
   else if (isTRUE(means)){
     Xl <- NULL
     message("Xl ignored")
@@ -228,8 +267,10 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
   	SubVar <- c("time", "Xj")
   }
 
-  SimbPerc <- IntervalConstrict(Simb = Simb, SubVar = SubVar, 
-                        qi = qi, QI = QI, spin = spin, ci = ci)
+  # Drop simulations outside of the middle
+  SimbPerc <- IntervalConstrict(Simb = Simb, SubVar = SubVar,
+                                qi = qi, spin = spin, ci = ci, 
+                                extremesDrop = extremesDrop)  
 
   # Final clean up
   # Subset simlinear object & create a data frame of important variables
@@ -260,7 +301,8 @@ coxsimLinear <- function(obj, b, qi = "Relative Hazard", Xj = NULL, Xl = NULL, m
     names(SimbPercSub) <- c("SimID", "Time", "HRate", 
                           "Strata", "HRValue")
     }
-  } else if (qi == "Hazard Ratio" | qi == "Relative Hazard" | qi == "First Difference"){
+  } else if (qi == "Hazard Ratio" | qi == "Relative Hazard" | 
+            qi == "First Difference"){
     SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$Xj, 
                              SimbPerc$QI)
     names(SimbPercSub) <- c("SimID", "Xj", "QI")
