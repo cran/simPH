@@ -41,7 +41,7 @@
 #'
 #' @seealso \code{\link{tvc}}
 #' @import data.table
-#' @importFrom dplyr group_by mutate
+#' @importFrom dplyr group_by mutate select distinct
 #' @importFrom DataCombine MoveFront
 #' @keywords utilities
 #' @export
@@ -115,9 +115,12 @@ SurvExpand <- function(data, GroupVar, Time, Time2, event, PartialData = TRUE,
     DGroup <- eval(parse(text = paste0('group_by(data, ', GroupVar, ')')))
     DGroup <- eval(parse(text = paste0('dplyr::mutate(DGroup, FinalTime = max(',
                                     Time2, '))')))
-    DGroup <- DGroup[, c(GroupVar, 'FinalTime')]
-    names(DGroup) <- c('UG', 'FinalTime')
-    DGroup <- DGroup[!duplicated(DGroup$UG, DGroup$FinalTime), ]
+    names(DGroup)[names(DGroup) == GroupVar] <- "UG"
+    DGroup <- group_by(DGroup, UG)
+    DGroup <- select(DGroup, UG, FinalTime)
+    DGroup <- distinct(DGroup, FinalTime)
+    DGroup <- ungroup(DGroup)
+
     DGroup <- data.table(DGroup, key = 'UG', allow.cartesian = TRUE)
     FullLast <- FullSub[DGroup, allow.cartesian = TRUE]
     FullLast <- FullLast[FT <= FinalTime]
@@ -135,7 +138,8 @@ SurvExpand <- function(data, GroupVar, Time, Time2, event, PartialData = TRUE,
     DataMerge <- data.table(DataMerge, key = 'UG', allow.cartisian = TRUE)
 
     FullComb <- FullLast[DataMerge, allow.cartesian = TRUE]
-    FullComb <- FullComb[, !c('allow.cartisian', 'allow.cartesian'), with = FALSE]
+    FullComb <- FullComb[, !c('allow.cartisian', 'allow.cartesian'),
+                        with = FALSE]
 
     if (isTRUE(messages)) message('Doing a final clean up.')
 

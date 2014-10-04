@@ -1,4 +1,4 @@
-#' Simulate quantities of interest for a range of values for a polynomial 
+#' Simulate quantities of interest for a range of values for a polynomial
 #' nonlinear effect from Cox Proportional Hazards models
 #'
 #' \code{coxsimPoly} simulates quantities of interest for polynomial covariate
@@ -93,7 +93,6 @@
 #' @importFrom reshape2 melt
 #' @importFrom MASS mvrnorm
 #' @importFrom survival basehaz
-#' @importFrom plyr rename
 #' @export
 
 coxsimPoly <- function(obj, b = NULL, qi = "Relative Hazard", pow = 2,
@@ -218,7 +217,7 @@ coxsimPoly <- function(obj, b = NULL, qi = "Relative Hazard", pow = 2,
     if (qi != "Hazard Rate"){
         SubVar <- "Xjl"
     } else if (qi == "Hazard Rate"){
-        Simb <- rename(Simb, replace = c("Xjl" = "HRValue"))
+        names(Simb)[names(Simb) == "Xjl"] <- "HRValue"
         SubVar <- c("SimID", "time", "HRValue")
     }
 
@@ -243,6 +242,6 @@ coxsimPoly <- function(obj, b = NULL, qi = "Relative Hazard", pow = 2,
       SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$Xj, SimbPerc$QI)
       names(SimbPercSub) <- c("SimID", "Xj", "QI")
   }
-    class(SimbPercSub) <- c("simpoly", qi)
+    class(SimbPercSub) <- c("simpoly", qi, "data.frame")
     SimbPercSub
 }
