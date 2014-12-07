@@ -5,7 +5,9 @@ simPH
 
 ### Christopher Gandrud
 
-### Version 1.2.3 [![Build Status](https://travis-ci.org/christophergandrud/simPH.png)](https://travis-ci.org/christophergandrud/simPH)
+### Version 1.2.4 [![Build Status](https://travis-ci.org/christophergandrud/simPH.png)](https://travis-ci.org/christophergandrud/simPH)
+
+[![DOI](https://zenodo.org/badge/5350/christophergandrud/simPH.png)](http://dx.doi.org/10.5281/zenodo.11961)
 
 #### Please report any bugs to:
 
@@ -128,15 +130,6 @@ is the code for installing the most recent development version:
 ```{S}
 devtools::install_github('christophergandrud/simPH')
 ```
-
-For the current development version you will also need to install the development
-versions of **dplyr** and **lazyeval**:
-
-```{S}
-devtools::install_github('hadley/lazyeval')
-devtools::install_github('hadlye/dplyr')
-```
-
 
 ## Tip
 
