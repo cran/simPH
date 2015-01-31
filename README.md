@@ -5,7 +5,7 @@ simPH
 
 ### Christopher Gandrud
 
-### Version 1.2.4 [![Build Status](https://travis-ci.org/christophergandrud/simPH.png)](https://travis-ci.org/christophergandrud/simPH)
+### Version 1.2.6 [![Build Status](https://travis-ci.org/christophergandrud/simPH.png)](https://travis-ci.org/christophergandrud/simPH)
 
 [![DOI](https://zenodo.org/badge/5350/christophergandrud/simPH.png)](http://dx.doi.org/10.5281/zenodo.11961)
 
@@ -188,7 +188,5 @@ and graph hazard ratios estimated from [Fine and Gray competing risks models](ht
 I am also working on a way to graph hazard ratios with frailties.
 
 ---
-
-[<img src="http://media.tumblr.com/023c285c14ef01953d3b67ffe789004d/tumblr_inline_mor1uu2OOZ1qz4rgp.png" height = "100" align="right" />](http://nadrosia.tumblr.com/post/53520500877/made-in-berlin-badge-update)
 
 Licensed under [GPL-3](https://github.com/christophergandrud/simPH/blob/master/LICENSE.md)
