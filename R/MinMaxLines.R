@@ -49,6 +49,9 @@
 MinMaxLines <- function(df, byVars = "Xj", hr = FALSE, strata = FALSE,
                         clean = FALSE){
     Xj <- QI <- Time <- HRValue <- HRate <- Strata <- NULL
+
+    df <- as.data.frame(df)
+
     if (isTRUE(hr) & !isTRUE(strata)){
         byVars <- c("Time", "HRValue")
     }
@@ -97,6 +100,7 @@ MinMaxLines <- function(df, byVars = "Xj", hr = FALSE, strata = FALSE,
         names(Linesdf) <- c(byVars, 'Min_CI', 'Lower50_CI','Median',
                             'Upper50_CI', 'Max_CI')
     }
+    class(Linesdf) <- 'data.frame'
     return(Linesdf)
 }
 

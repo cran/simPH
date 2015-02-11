@@ -5,10 +5,10 @@
 \title{Plot simulated penalised spline hazards from Cox Proportional Hazards Models}
 \usage{
 \method{simGG}{simspline}(obj, SmoothSpline = TRUE, FacetTime = NULL,
-  from = NULL, to = NULL, xlab = NULL, ylab = NULL, zlab = NULL,
-  title = NULL, method = "auto", lcolour = "#2B8CBE", lsize = 1,
-  pcolour = "#A6CEE3", psize = 1, alpha = 0.2, surface = TRUE,
-  fit = "linear", type = "points", ...)
+  from = NULL, to = NULL, rug = TRUE, rug_position = "identity",
+  xlab = NULL, ylab = NULL, zlab = NULL, title = NULL,
+  method = "auto", lcolour = "#2B8CBE", lsize = 1, pcolour = "#A6CEE3",
+  psize = 1, alpha = 0.2, type = "ribbons", ...)
 }
 \arguments{
 \item{obj}{a \code{simspline} class object}
@@ -27,6 +27,14 @@ match values of the \code{time} element of \code{obj}.}
 
 \item{to}{numeric time to plot to. Only relevant if
 \code{qi = "Hazard Rate"}.}
+
+\item{rug}{logical indicating whether or not to include a rug plot showing
+the distribution of values in the sample used to estimate the \code{coxph}
+model. Only relevant when the quantity of interest is not
+\code{"Hazard Rate"}.}
+
+\item{rug_position}{character string. The position adjustment to use for
+overlapping points in the rug plot. Use \code{"jitter"} to jitter the points.}
 
 \item{xlab}{a label for the plot's x-axis.}
 
@@ -64,14 +72,6 @@ maximum value per line or point at the center of the distribution. Lines or
 points further from the center are more transparent the further they get
 from the middle.}
 
-\item{surface}{plot surface. Default is \code{surface = TRUE}. Only relevant
-if \code{qi == 'Hazard Rate'} and \code{FacetTime = NULL}.}
-
-\item{fit}{one or more of \code{"linear"}, \code{"quadratic"},
-\code{"smooth"}, \code{"additive"}; to display fitted surface(s); partial
-matching is supported e.g., \code{c("lin", "quad")}. Only relevant if
-\code{qi == 'Relative Hazard'} and \code{FacetTime = NULL}.}
-
 \item{type}{character string. Specifies how to plot the simulations. Can be
 \code{points}, \code{lines}, or \code{ribbons}. If points then each
 simulation value will be plotted. If \code{lines} is chosen then each
@@ -88,32 +88,28 @@ rather than points is that it creates plots with smaller file sizes.}
 \item{...}{Additional arguments. (Currently ignored.)}
 }
 \value{
-a \code{gg} \code{ggplot} class object. See \code{\link{scatter3d}}
-for values from \code{scatter3d} calls.
+a \code{gg} \code{ggplot} class object.
 }
 \description{
-\code{simGG.simspline} uses \link{ggplot2} and \link{scatter3d} to plot
+\code{simGG.simspline} uses \link{ggplot2} to plot
 quantities of interest from \code{simspline} objects, including relative
 hazards, first differences, hazard ratios, and hazard rates.
 }
 \details{
-Uses \code{ggplot2} and \code{scatter3d} to plot the quantities of
+Uses \code{ggplot2} to plot the quantities of
 interest from \code{simspline} objects, including relative hazards, first
 differences, hazard ratios, and hazard rates. If currently does not support
 hazard rates for multiple strata.
 
-It can graph hazard rates as a 3D plot using \code{\link{scatter3d}} with
-the dimensions: Time, Hazard Rate, and the value of \code{Xj}. Ribbon plots
-are not available with 3D plots. You can also choose to plot hazard rates
-for a range of values of \code{Xj} in two dimensional plots at specific
-points in time. Each plot is arranged in a facet grid.
+You can to plot hazard rates for a range of values of \code{Xj} in two
+dimensional plots at specific points in time. Each plot is arranged in a
+facet grid.
 
 Note: A dotted line is created at y = 1 (0 for first difference), i.e. no
 effect, for time-varying hazard ratio graphs. No line is created for hazard
 rates.
 }
 \examples{
-\dontrun{
 # Load Carpenter (2002) data
 data("CarpenterFdaData")
 
@@ -134,30 +130,28 @@ Sim1 <- coxsimSpline(M1, bspline = "pspline(stafcder, df = 4)",
                     bdata = CarpenterFdaData$stafcder,
                     qi = "Hazard Ratio",
                     Xj = seq(1100, 1700, by = 10),
-                    Xl = seq(1099, 1699, by = 10), spin = TRUE)
+                    Xl = seq(1099, 1699, by = 10), spin = TRUE, nsim = 100)
 
+# Plot relative hazard
+simGG(Sim1, alpha = 0.5)
+
+\dontrun{
 # Simulate Hazard Rate for orderent
 Sim2 <- coxsimSpline(M1, bspline = "pspline(orderent, df = 4)",
                     bdata = CarpenterFdaData$orderent,
                     qi = "Hazard Rate",
                     Xj = seq(1, 30, by = 2), ci = 0.9, nsim = 10)
 
-# Plot relative hazard
-simGG(Sim1, alpha = 0.5)
-
-# 3D plot hazard rate
-simGG(Sim2, zlab = "orderent", fit = "quadratic")
-
 # Create a time grid plot
 # Find all points in time where baseline hazard was found
-unique(Sim2$Time)
+unique(Sim2$sims$Time)
 
 # Round time values so they can be exactly matched with FacetTime
-Sim2$Time <- round(Sim2$Time, digits = 2)
+Sim2$sims$Time <- round(Sim2$sims$Time, digits = 2)
 
 # Create plot
 simGG(Sim2, FacetTime = c(6.21, 25.68, 100.64, 202.36),
-       ribbons = TRUE, alpha = 0.5)
+       type = 'ribbons', alpha = 0.5)
 
 # Simulated Fitted Values of stafcder
 Sim3 <- coxsimSpline(M1, bspline = "pspline(stafcder, df = 4)",
@@ -167,13 +161,13 @@ Sim3 <- coxsimSpline(M1, bspline = "pspline(stafcder, df = 4)",
                     Xl = seq(1099, 1699, by = 10), ci = 0.90)
 
 # Plot simulated Hazard Ratios
-simGG(Sim3, xlab = "\\nFDA Drug Review Staff", alpha = 0.2)
+simGG(Sim3, xlab = "\\nFDA Drug Review Staff", type = 'lines', alpha = 0.2)
 simGG(Sim3, xlab = "\\nFDA Drug Review Staff", alpha = 0.2,
-      SmoothSpline = TRUE, type = 'lines')
+      SmoothSpline = TRUE, type = 'points')
 }
 }
 \seealso{
 \code{\link{coxsimLinear}}, \code{\link{simGG.simtvc}},
-\code{\link{ggplot2}}, and \code{\link{scatter3d}}
+\code{\link{ggplot2}}
 }
 

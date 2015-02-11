@@ -211,3 +211,54 @@ MoveFront <- function(data, Var, exact = TRUE, ignore.case = NULL, fixed = NULL)
     }
     return(data)
 }
+
+#' Convert a coxsim class object into a data frame
+#'
+#' @param x a \code{coxsim} class object.
+#' @param ... arguments to pass to \code{data.frame}.
+#'
+#' @export
+
+as.data.frame.coxsim <- function(x, ...) {
+    out <- x$sims
+    out <- data.frame(out, ...)
+    out
+}
+
+#' Extract values for rug plot
+#' @param obj a \code{coxsim} class object.
+#' @param x a character string for the x-axis value.
+#' @param rug_var character string. When rug is a data frame, then variable to
+#' extract.
+#'
+#' @keywords internals
+#' @noRd
+
+rugExtract <- function(obj, x = "Xj", rug_var) {
+    if (!is.data.frame(obj$rug)) {
+        xaxis <- obj$rug
+    }
+    else if (is.data.frame(obj$rug)){
+        xaxis <- obj$rug[, rug_var]
+    }
+    xaxis.df <- data.frame(xaxis = xaxis, QI = 1) # Meaningless QI for ggplot
+
+    xaxis.df <- subset(xaxis.df, xaxis >= min(obj$sims[, x]) &
+                                    xaxis <= max(obj$sims[, x]))
+    return(xaxis.df)
+}
+
+#' For simGG.simspline
+#'
+#' @keywords internals
+#' @noRd
+
+SubsetTime <- function(f, Temps){
+    Time <- NULL
+    CombObjdf <- data.frame()
+    for (i in f){
+        TempsSub <- subset(Temps, Time == i)
+        CombObjdf <- rbind(CombObjdf, TempsSub)
+    }
+    CombObjdf
+}

@@ -45,12 +45,12 @@ Hazard Rates.}
 
 \item{extremesDrop}{logical whether or not to drop simulated quantity of
 interest values that are \code{Inf}, \code{NA}, \code{NaN} and
-\eqn{> 1000000} for \code{spin = FALSE} or \eqn{> 800} for \code{spin = TRUE}.
-These values are difficult to plot \code{\link{simGG}} and may prevent
-\code{spin} from finding the central interval.}
+\eqn{> 1000000} for \code{spin = FALSE} or \eqn{> 800} for
+\code{spin = TRUE}. These values are difficult to plot \code{\link{simGG}}
+and may prevent \code{spin} from finding the central interval.}
 }
 \value{
-a \code{simlinear} object
+a \code{simlinear}, \code{coxsim} object
 }
 \description{
 Simulates relative hazards, first differences, hazard ratios,
@@ -106,7 +106,7 @@ Shortest Probability Intervals.'' Arvix.
 \url{http://arxiv.org/pdf/1302.2142v1.pdf}.
 }
 \seealso{
-\code{\link{simGG}}, \code{\link{survival}}, \code{\link{strata}},
-and \code{\link{coxph}}
+\code{\link{simGG.simlinear}}, \code{\link{survival}},
+\code{\link{strata}}, and \code{\link{coxph}}
 }
 

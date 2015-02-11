@@ -116,7 +116,7 @@ BaseVars <- c('qmv', 'backlog', 'coop', 'codec', 'qmvpostsea', 'thatcher')
 GolubEUPData <- tvc(GolubEUPData, b = BaseVars, tvar = 'end', tfun = 'log')
 
 # Run Cox PH Model
-M2 <- coxph(Surv(begin, end, event) ~ qmv + qmvpostsea + qmvpostteu +
+M1 <- coxph(Surv(begin, end, event) ~ qmv + qmvpostsea + qmvpostteu +
                 coop + codec + eu9 + eu10 + eu12 + eu15 + thatcher +
                 agenda + backlog + qmv_log + qmvpostsea_log + coop_log +
                 codec_log + thatcher_log + backlog_log,
