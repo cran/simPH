@@ -238,8 +238,10 @@ coxsimtvc <- function(obj, b, btvc, qi = "Relative Hazard", Xj = NULL,
             Simb$QI <- exp((Simb$Xj - Simb$Xl) * Simb$CombCoef)
         }
     } else if (qi == "Hazard Rate"){
-        Xl <- NULL
-        message("Xl is ignored.")
+        if (!is.null(Xl)) {
+            Xl <- NULL
+            message("Xl is ignored.")
+        }
         Xs <- data.frame(Xj)
         Xs$HRValue <- paste(Xs[, 1])
         Simb <- merge(TVSim, Xs)
@@ -256,9 +258,9 @@ coxsimtvc <- function(obj, b, btvc, qi = "Relative Hazard", Xj = NULL,
             message(paste("There are", Rows, "simulations. This may take awhile. Consider using nsim to reduce the number of simulations."))
         }
         Simb$QI <- Simb$hazard * Simb$HR
-        if (is.null(Simb$strata)){
+        if (!('strata' %in% names(Simb))){
             Simb <- Simb[, list(SimID, time, tf, Xj, QI, HRValue)]
-        } else if (!is.null(Simb$strata)){
+        } else if ('strata' %in% names(Simb)){
             Simb <- Simb[, list(SimID, time, tf, Xj, QI, HRValue, strata)]
         }
         Simb <- data.frame(Simb)
@@ -284,12 +286,12 @@ coxsimtvc <- function(obj, b, btvc, qi = "Relative Hazard", Xj = NULL,
     # Final clean up
     # Subset simtvc object & create data frame of important variables
     if (qi == "Hazard Rate"){
-        if (is.null(SimbPerc$strata)){
+        if (!('strata' %in% names(SimbPerc))){
             SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$RealTime,
                                 SimbPerc$QI,
             SimbPerc$HRValue)
             names(SimbPercSub) <- c("SimID", "Time", "HRate", "HRValue")
-        } else if (!is.null(SimbPerc$strata)) {
+        } else if ('strata' %in% names(SimbPerc)) {
             SimbPercSub <- data.frame(SimbPerc$SimID, SimbPerc$RealTime,
                             SimbPerc$QI,
             SimbPerc$strata, SimbPerc$HRValue)
