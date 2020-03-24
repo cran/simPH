@@ -167,7 +167,7 @@ coxsimPoly <- function(obj, b = NULL, qi = "Relative Hazard", pow = 2,
     # Function to Multiply covariates by polynomials
     Fitted <- function(VN, x, p){
         Temp <- outer(Drawn[, VN], x^p)
-        TempDF <- data.frame(melt(Temp))
+        TempDF <- MatrixMelter(Temp)
         TempDF <- TempDF[, 'value']
         TempDF
     }

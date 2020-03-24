@@ -287,7 +287,7 @@ coxsimInteract <- function(obj, b1, b2, qi = "Marginal Effect", X1 = NULL,
                 BarValue <- MeanValues[i, ]
                 DrawnCoef <- DrawnDF[, i]
                 FittedCoef <- outer(DrawnCoef, BarValue)
-                FCMolten <- data.frame(melt(FittedCoef))
+                FCMolten <- MatrixMelter(FittedCoef)
                 Temp <- cbind(Temp, FCMolten[,3])
             }
             Names <- c("ID", Z)

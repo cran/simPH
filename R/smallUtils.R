@@ -262,3 +262,17 @@ SubsetTime <- function(f, Temps){
     }
     CombObjdf
 }
+
+#' Melt matrix via data.table
+#'
+#' @keywords internals
+#' @noRd
+
+MatrixMelter <- function(x){
+  . <- NULL
+    x %>%
+      as.data.frame %>%
+      as.data.table(., keep.rownames = TRUE) %>%
+      melt(., id.vars = "rn") %>%
+      as.data.frame
+}
