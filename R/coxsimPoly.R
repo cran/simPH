@@ -18,7 +18,7 @@
 #' @param pow numeric polynomial used in \code{coxph}.
 #' @param Xj numeric vector of fitted values for \code{b} to simulate for.
 #' @param Xl numeric vector of values to compare \code{Xj} to. If \code{NULL},
-#' then it is authomatically set to 0.
+#' then it is automatically set to 0.
 #' @param nsim the number of simulations to run per value of \code{Xj}. Default
 #' is \code{nsim = 1000}.
 #' @param ci the proportion of simulations to keep. The default is
@@ -91,7 +91,7 @@
 #'
 #' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient
 #' Shortest Probability Intervals.'' Arvix.
-#' \url{http://arxiv.org/pdf/1302.2142v1.pdf}.
+#' \url{https://arxiv.org/pdf/1302.2142v1.pdf}.
 #'
 #' @seealso \code{\link{simGG.simpoly}}, \code{\link{survival}},
 #' \code{\link{strata}}, and \code{\link{coxph}}
