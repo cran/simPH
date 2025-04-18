@@ -4,7 +4,7 @@
 
 **Christopher Gandrud**
 
-### [![R build status](https://github.com/christophergandrud/simPH/workflows/R-CMD-check/badge.svg)](https://github.com/christophergandrud/simPH/actions) [![Build Status](https://travis-ci.org/christophergandrud/simPH.png)](https://travis-ci.org/christophergandrud/simPH) [![Codecov test coverage](https://codecov.io/gh/christophergandrud/simPH/branch/master/graph/badge.svg)](https://codecov.io/gh/christophergandrud/simPH?branch=master) [![CRAN Version](https://CRAN.R-project.org/package=simPH)](https://CRAN.R-project.org/package=simPH) ![CRAN Downloads](https://cranlogs.r-pkg.org/badges/last-month/simPH) ![CRAN Total Downloads](https://cranlogs.r-pkg.org/badges/grand-total/simPH)
+###  [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable) [![R build status](https://github.com/christophergandrud/simPH/workflows/R-CMD-check/badge.svg)](https://github.com/christophergandrud/simPH/actions) [![Codecov test coverage](https://codecov.io/gh/christophergandrud/simPH/branch/master/graph/badge.svg)](https://app.codecov.io/gh/christophergandrud/simPH?branch=master) [![CRAN status](https://www.r-pkg.org/badges/version/simPH)](https://CRAN.R-project.org/package=simPH) ![CRAN Downloads](https://cranlogs.r-pkg.org/badges/last-month/simPH) ![CRAN Total Downloads](https://cranlogs.r-pkg.org/badges/grand-total/simPH)
 
 #### Please report any bugs to:
 
@@ -19,7 +19,7 @@ non-proportional hazards, as well as stratified survival curves from Cox
 Proportional Hazard models.
 
 For more information plus examples, please see the
-[description paper](https://www.jstatsoft.org/article/view/v065i03) in the
+[description paper](https://doi.org/10.18637/jss.v065.i03) in the
 [Journal of Statistical Software](https://www.jstatsoft.org/).
 
 To cite the paper please use:
@@ -181,14 +181,14 @@ major part of why I developed this package):
 Gandrud, Christopher. 2013. [“The Diffusion of Financial Supervisory Governance Ideas.”](https://www.tandfonline.com/doi/full/10.1080/09692290.2012.727362)
 *Review of International Political Economy*. 20(4): 881-916.
 
-## Future Plans
+## Build and check
 
-I intend to expand the quantities of interest that can be simulated and graphed
-for Cox PH models. I am also currently working on functions that can simulate
-and graph hazard ratios estimated from
-[Fine and Gray competing risks models](https://www.jstor.org/stable/2670170).
+To build and CRAN check use:
 
-I am also working on a way to graph hazard ratios with frailties.
+```
+devtools::check(build_args = c('--compact-vignettes=gs+qpdf'), args = '--as-cran')
+```
+
 
 ---
 

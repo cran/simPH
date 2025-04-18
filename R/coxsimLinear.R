@@ -3,10 +3,10 @@
 #'
 #' \code{coxsimLinear} simulates relative hazards, first differences, and
 #' hazard ratios for linear covariates that are not interacted with time or
-#' nonlinearly transformed from models estimated with \code{\link{coxph}} using
+#' nonlinearly transformed from models estimated with \code{\link[survival]{coxph}} using
 #' the multivariate normal distribution. These can be plotted with
 #' \code{\link{simGG}}.
-#' @param obj a \code{\link{coxph}} class fitted model object.
+#' @param obj a \code{\link[survival]{coxph}} class fitted model object.
 #' @param b character string name of the coefficient you would like to simulate.
 #' @param qi quantity of interest to simulate. Values can be
 #' \code{"Relative Hazard"}, \code{"First Difference"}, \code{"Hazard Ratio"},
@@ -71,8 +71,8 @@
 #'                       ci = 0.99)
 #' }
 #'
-#' @seealso \code{\link{simGG.simlinear}}, \code{\link{survival}},
-#' \code{\link{strata}}, and \code{\link{coxph}}
+#' @seealso \code{\link{simGG.simlinear}}
+#' \code{\link[survival]{strata}}, and \code{\link[survival]{coxph}}
 #'
 #' @references Gandrud, Christopher. 2015. simPH: An R Package for Illustrating
 #' Estimates from Cox Proportional Hazard Models Including for Interactive and
@@ -88,7 +88,7 @@
 #'
 #' Liu, Ying, Andrew Gelman, and Tian Zheng. 2013. ''Simulation-Efficient
 #' Shortest Probability Intervals.'' Arvix.
-#' \url{https://arxiv.org/pdf/1302.2142v1.pdf}.
+#' \url{http://arxiv.org/pdf/1302.2142v1}.
 #'
 #' @import data.table
 #' @importFrom stats vcov model.frame

@@ -42,7 +42,7 @@
 #' Test <- tvc(GolubEUPData, b = BaseVars, tvar = 'end', tfun = 'log')
 #'
 #' @seealso \code{\link{SurvExpand}}, \code{\link{simGG.simtvc}},
-#' \code{\link{coxsimtvc}}, \code{\link{survival}}, and \code{\link{coxph}}
+#' \code{\link{coxsimtvc}}, and \code{\link[survival]{coxph}}
 #' @keywords utilities
 #' @export
 
@@ -112,9 +112,9 @@ tvc <- function(data, b, tvar, tfun = "linear", pow = NULL, vector = FALSE)
 
 setXl <- function(Xj, diff = 1){
     # Errors
-    if (class(Xj) != 'numeric') stop('Xj must be numeric',
+    if (!inherits(Xj, 'numeric')) stop('Xj must be numeric',
                                                 call. = FALSE)
-    if (class(diff) != 'numeric') stop('diff must be numeric',
+    if (!inherits(diff, 'numeric')) stop('diff must be numeric',
                                      call. = FALSE)
     if (length(diff) != 1) stop('diff can only be one value', call. = FALSE)
     if (diff <= 0){
